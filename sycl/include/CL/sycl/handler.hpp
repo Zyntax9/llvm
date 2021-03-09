@@ -25,6 +25,7 @@
 #include <CL/sycl/kernel_handler.hpp>
 #include <CL/sycl/nd_item.hpp>
 #include <CL/sycl/nd_range.hpp>
+#include <CL/sycl/ONEAPI/variable_parallel_for_helper.hpp>
 #include <CL/sycl/property_list.hpp>
 #include <CL/sycl/sampler.hpp>
 #include <CL/sycl/stl.hpp>
@@ -226,11 +227,11 @@ reduAuxCGFunc(handler &CGH, size_t NWorkItems, size_t MaxWGSize,
               Reduction &Redu);
 
 template <typename KernelName, typename KernelType, int Dims,
-          typename... Reductions, size_t... Is>
-void reduCGFunc(handler &CGH, KernelType KernelFunc,
-                const nd_range<Dims> &Range,
-                std::tuple<Reductions...> &ReduTuple,
-                std::index_sequence<Is...>);
+          typename... Reductions, size_t... RIs, typename... DataStreams,
+          size_t... DSIs>
+void varPFCGFunc(handler &, KernelType, const nd_range<Dims> &,
+                 std::tuple<Reductions...> &, std::index_sequence<RIs...>,
+                 std::tuple<DataStreams...> &, std::index_sequence<DSIs...>);
 
 template <typename KernelName, typename KernelType, typename... Reductions,
           size_t... Is>
@@ -260,16 +261,6 @@ reduSaveFinalResultToUserMemHelper(std::vector<event> &Events,
 
 __SYCL_EXPORT size_t reduGetMaxWGSize(shared_ptr_class<queue_impl> Queue,
                                       size_t LocalMemBytesPerWorkItem);
-
-template <typename... ReductionT, size_t... Is>
-size_t reduGetMemPerWorkItem(std::tuple<ReductionT...> &ReduTuple,
-                             std::index_sequence<Is...>);
-
-template <typename TupleT, std::size_t... Is>
-std::tuple<std::tuple_element_t<Is, TupleT>...>
-tuple_select_elements(TupleT Tuple, std::index_sequence<Is...>);
-
-template <typename FirstT, typename... RestT> struct AreAllButLastReductions;
 
 } // namespace detail
 } // namespace ONEAPI
@@ -1489,14 +1480,24 @@ public:
   template <typename KernelName = detail::auto_name, int Dims,
             typename... RestT>
   std::enable_if_t<(sizeof...(RestT) >= 3 &&
-                    ONEAPI::detail::AreAllButLastReductions<RestT...>::value)>
+                    ONEAPI::detail::AreAllButLastValidParam<RestT...>::value)>
   parallel_for(nd_range<Dims> Range, RestT... Rest) {
     std::tuple<RestT...> ArgsTuple(Rest...);
     constexpr size_t NumArgs = sizeof...(RestT);
     auto KernelFunc = std::get<NumArgs - 1>(ArgsTuple);
-    auto ReduIndices = std::make_index_sequence<NumArgs - 1>();
+    auto ArgsIndices = std::make_index_sequence<NumArgs - 1>();
+
+    // Get reduction indices and elements.
+    typename ONEAPI::detail::make_reduction_index_sequence<decltype(ArgsTuple),
+        decltype(ArgsIndices)>::type ReduIndices{};
     auto ReduTuple =
         ONEAPI::detail::tuple_select_elements(ArgsTuple, ReduIndices);
+
+    // Get data stream indices and elements.
+    typename ONEAPI::detail::make_data_stream_index_sequence<decltype(ArgsTuple),
+        decltype(ArgsIndices)>::type DataStreamIndices{};
+    auto DataStreamTuple =
+        ONEAPI::detail::tuple_select_elements(ArgsTuple, DataStreamIndices);
 
     size_t LocalMemPerWorkItem =
         ONEAPI::detail::reduGetMemPerWorkItem(ReduTuple, ReduIndices);
@@ -1512,8 +1513,9 @@ public:
                                     std::to_string(MaxWGSize),
                                 PI_INVALID_WORK_GROUP_SIZE);
 
-    ONEAPI::detail::reduCGFunc<KernelName>(*this, KernelFunc, Range, ReduTuple,
-                                           ReduIndices);
+    varPFCGFunc<KernelName>(KernelFunc, Range, ReduTuple,
+                            ReduIndices, DataStreamTuple,
+                            DataStreamIndices);
     shared_ptr_class<detail::queue_impl> QueueCopy = MQueue;
     this->finalize();
 
@@ -2315,6 +2317,155 @@ private:
       KernelFunc(Arg);
     };
   }
+  
+  template <typename... DataStreams, size_t... Is>
+  std::tuple<typename DataStreams::accessor_type...>
+  getDataStreamAccs(std::tuple<DataStreams...> &DataStreamTuple,
+                    std::index_sequence<Is...>) {
+    return {std::get<Is>(DataStreamTuple).access...};
+  }
+
+  // TODO: Validate that KernelFunc take const variants if streams use read only
+  //       access mode.
+  template <typename KernelName, bool Pow2WG, bool IsOneWG, typename KernelType,
+            int Dims, typename... Reductions, size_t... RIs,
+            typename... DataStreams, size_t... DSIs>
+  void varPFCGFuncImpl(KernelType KernelFunc,
+                       const nd_range<Dims> &Range,
+                       std::tuple<Reductions...> &ReduTuple,
+                       std::index_sequence<RIs...>,
+                       std::tuple<DataStreams...> &DataStreamTuple,
+                       std::index_sequence<DSIs...>) {
+    auto ReduIndices = std::index_sequence_for<Reductions...>();
+    auto DataStreamIndices = std::index_sequence_for<DataStreams...>();
+    size_t WGSize = Range.get_local_range().size();
+    size_t LocalAccSize = WGSize + (Pow2WG ? 0 : 1);
+    auto LocalAccsTuple =
+        ONEAPI::detail::createReduLocalAccs<Reductions...>(LocalAccSize, *this,
+                                                           ReduIndices);
+
+    size_t NWorkGroups = IsOneWG ? 1 : Range.get_group_range().size();
+    auto OutAccsTuple =
+        ONEAPI::detail::createReduOutAccs<IsOneWG>(NWorkGroups, *this,
+                                                   ReduTuple, ReduIndices);
+    auto IdentitiesTuple = ONEAPI::detail::getReduIdentities(ReduTuple, ReduIndices);
+    auto InitToIdentityProps =
+        ONEAPI::detail::getInitToIdentityProperties(ReduTuple, ReduIndices);
+    auto BOPsTuple = ONEAPI::detail::getReduBOPs(ReduTuple, ReduIndices);
+
+    auto DataStreamAccs = getDataStreamAccs(DataStreamTuple, DataStreamIndices);
+
+    using Name = typename ONEAPI::detail::get_reduction_main_kernel_name_t<
+        KernelName, KernelType, Pow2WG, IsOneWG, decltype(OutAccsTuple)>::name;
+    parallel_for<Name>(Range, [=](nd_item<Dims> NDIt) {
+      auto ReduIndices = std::index_sequence_for<Reductions...>();
+      auto ReducersTuple =
+          ONEAPI::detail::createReducers<Reductions...>(IdentitiesTuple,
+                                                        BOPsTuple, ReduIndices);
+
+      // Read from all data streams with read+ access
+      std::tuple<typename DataStreams::value_type...> DataStreamVals{};
+      auto DataStreamIndices = std::index_sequence_for<DataStreams...>();
+      auto ReadDataStreamIndices =
+          ONEAPI::detail::filterSequence<DataStreams...>(
+            ONEAPI::detail::IsReadableDataStreamPredicate{}, DataStreamIndices);
+      ONEAPI::detail::readStreamValueToTuple(NDIt.get_global_id(),
+        DataStreamVals, DataStreamAccs, ReadDataStreamIndices);
+
+      auto ArgTuple = std::tuple_cat(ReducersTuple, DataStreamVals);
+      auto ArgIndices = std::index_sequence<RIs..., DSIs...>();
+      
+      // The .MValue field of each of the elements in ArgTuple
+      // gets initialized in this call.
+      ONEAPI::detail::callUserKernelFunc(KernelFunc, NDIt, ArgTuple, ArgIndices);
+
+      // Write back to all data streams with write+ access
+      auto WriteDataStreamIndices =
+          ONEAPI::detail::filterSequence<DataStreams...>(
+            ONEAPI::detail::IsWriteableDataStreamPredicate{},
+            DataStreamIndices);
+      ONEAPI::detail::writeTupleValueToStream(NDIt.get_global_id(),
+        DataStreamAccs, DataStreamVals, WriteDataStreamIndices);
+
+      // Only finish reductions if there are any.
+      if (sizeof...(Reductions) > 0) {
+        size_t WGSize = NDIt.get_local_range().size();
+        size_t LID = NDIt.get_local_linear_id();
+        ONEAPI::detail::initReduLocalAccs<Pow2WG>(LID, WGSize, LocalAccsTuple,
+                                                  ReducersTuple,
+                                                  IdentitiesTuple, ReduIndices);
+        NDIt.barrier();
+
+        size_t PrevStep = WGSize;
+        for (size_t CurStep = PrevStep >> 1; CurStep > 0; CurStep >>= 1) {
+          if (LID < CurStep) {
+            // LocalReds[LID] = BOp(LocalReds[LID], LocalReds[LID + CurStep]);
+            ONEAPI::detail::reduceReduLocalAccs(LID, LID + CurStep,
+                                                LocalAccsTuple, BOPsTuple,
+                                                ReduIndices);
+          } else if (!Pow2WG && LID == CurStep && (PrevStep & 0x1)) {
+            // LocalReds[WGSize] = BOp(LocalReds[WGSize], LocalReds[PrevStep - 1]);
+            ONEAPI::detail::reduceReduLocalAccs(WGSize, PrevStep - 1,
+                                                LocalAccsTuple, BOPsTuple,
+                                                ReduIndices);
+          }
+          NDIt.barrier();
+          PrevStep = CurStep;
+        }
+
+        // Compute the partial sum/reduction for the work-group.
+        if (LID == 0) {
+          size_t GrID = NDIt.get_group_linear_id();
+          ONEAPI::detail::writeReduSumsToOutAccs<Pow2WG, IsOneWG>(
+              GrID, WGSize, (std::tuple<Reductions...> *)nullptr, OutAccsTuple,
+              LocalAccsTuple, BOPsTuple, IdentitiesTuple, InitToIdentityProps,
+              ReduIndices);
+        }
+      }
+    });
+  }
+
+  template <typename KernelName, typename KernelType, int Dims,
+            typename... Reductions, size_t... RIs, typename... DataStreams,
+            size_t... DSIs>
+  void varPFCGFunc(KernelType KernelFunc,
+                   const nd_range<Dims> &Range,
+                   std::tuple<Reductions...> &ReduTuple,
+                   std::index_sequence<RIs...> ReduIndices,
+                   std::tuple<DataStreams...> &DataStreamTuple,
+                   std::index_sequence<DSIs...> DataStreamIndices) {
+    size_t WGSize = Range.get_local_range().size();
+    size_t NWorkGroups = Range.get_group_range().size();
+    bool Pow2WG = (WGSize & (WGSize - 1)) == 0;
+    if (NWorkGroups == 1) {
+      // TODO: consider having only one variant of kernel instead of two here.
+      // Having two kernels, where one is just slighly more efficient than
+      // another, and only for the purpose of running 1 work-group may be too
+      // expensive.
+      if (Pow2WG)
+        varPFCGFuncImpl<KernelName, true, true>(KernelFunc, Range,
+                                                ReduTuple, ReduIndices,
+                                                DataStreamTuple,
+                                                DataStreamIndices);
+      else
+        varPFCGFuncImpl<KernelName, false, true>(KernelFunc, Range,
+                                                ReduTuple, ReduIndices,
+                                                DataStreamTuple,
+                                                DataStreamIndices);
+    } else {
+      if (Pow2WG)
+        varPFCGFuncImpl<KernelName, true, false>(KernelFunc, Range,
+                                                ReduTuple, ReduIndices,
+                                                DataStreamTuple,
+                                                DataStreamIndices);
+      else
+        varPFCGFuncImpl<KernelName, false, false>(KernelFunc, Range,
+                                                  ReduTuple, ReduIndices,
+                                                  DataStreamTuple,
+                                                  DataStreamIndices);
+    }
+  }
 };
+
 } // namespace sycl
 } // __SYCL_INLINE_NAMESPACE(cl)

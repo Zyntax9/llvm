@@ -9,6 +9,7 @@
 #pragma once
 
 #include <CL/sycl/ONEAPI/atomic.hpp>
+#include <CL/sycl/ONEAPI/data_stream.hpp>
 #include <CL/sycl/ONEAPI/experimental/builtins.hpp>
 #include <CL/sycl/ONEAPI/filter_selector.hpp>
 #include <CL/sycl/ONEAPI/function_pointer.hpp>
