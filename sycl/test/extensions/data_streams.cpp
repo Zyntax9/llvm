@@ -19,7 +19,7 @@ bool test1(queue q) {
     buffer<int> resBuff{&res, range{1}};
     q.submit([&](handler &cgh) {
       auto resAcc = resBuff.get_access<access::mode::read_write>(cgh);
-      auto aStream = data_stream<access::mode::read, int, 1>(aBuff, cgh);
+      auto aStream = data_stream<int, 1, access::mode::read>(aBuff, cgh);
 
       auto sumReduction = reduction(resAcc, plus<>());
       cgh.parallel_for<class fact>(nd_range(range{N}, range{64}), sumReduction,
@@ -52,9 +52,9 @@ bool test2(queue q) {
     buffer<int> bBuff{B, range{N}};
     buffer<int> cBuff{C, range{N}};
     q.submit([&](handler &cgh) {
-      auto aStream = data_stream<access::mode::read, int, 1>(aBuff, cgh);
-      auto bStream = data_stream<access::mode::read, int, 1>(bBuff, cgh);
-      auto cStream = data_stream<access::mode::write, int, 1>(cBuff, cgh);
+      auto aStream = data_stream<int, 1, access::mode::read>(aBuff, cgh);
+      auto bStream = data_stream<int, 1, access::mode::read>(bBuff, cgh);
+      auto cStream = data_stream<int, 1, access::mode::write>(cBuff, cgh);
 
       cgh.parallel_for<class pow2>(nd_range(range{N}, range{64}),
                                    aStream, bStream, cStream,

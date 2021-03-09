@@ -9,13 +9,16 @@
 #pragma once
 
 #include <CL/sycl/accessor.hpp>
-#include <CL/sycl/buffer.hpp>
-#include <CL/sycl/handler.hpp>
 
 #include <type_traits>
 
 __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl {
+
+// Forward declarations
+class handler;
+template <typename, int, typename, typename> class buffer;
+
 namespace ONEAPI {
 namespace detail {
 
@@ -32,13 +35,13 @@ template <typename T> struct IsDataStream {
 } // namespace detail
 
 
-template <access::mode AccessMode, typename DataT, int Dimensions>
+template <typename DataT, int Dimensions, access::mode AccessMode>
 class data_stream : private detail::data_stream_base {
 public:
   using value_type = DataT;
   using reference
-    = std::conditional<AccessMode == access::mode::read, const DataT &,
-                       const DataT &>;
+    = typename std::conditional<AccessMode == access::mode::read, const DataT &,
+                                DataT &>::type;
   static constexpr access::mode accessor_mode = AccessMode;
 
   template <typename T = DataT, int Dims = Dimensions, typename AllocatorT>

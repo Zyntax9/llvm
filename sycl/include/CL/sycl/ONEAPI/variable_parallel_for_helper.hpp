@@ -404,6 +404,13 @@ void writeTupleValueToStream(id<Dims> gid, DataStreamAccessorTupleT &streamAccs,
   writeTupleValueToStream(gid, streamAccs, vals, std::index_sequence<Is...>{});
 }
 
+template <typename DataStreamValueTupleT, typename... DataStreams, size_t... Is>
+constexpr std::tuple<typename DataStreams::reference...>
+getReferenceTuple(DataStreamValueTupleT &vals, std::tuple<DataStreams...>,
+                  std::index_sequence<Is...>) {
+  return { const_cast<typename DataStreams::reference>(std::get<Is>(vals))... };
+}
+
 } // namespace detail
 } // namespace ONEAPI
 } // namespace sycl

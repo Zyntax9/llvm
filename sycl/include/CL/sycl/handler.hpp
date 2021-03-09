@@ -2371,8 +2371,11 @@ private:
             ONEAPI::detail::IsReadableDataStreamPredicate{}, DataStreamIndices);
       ONEAPI::detail::readStreamValueToTuple(NDIt.get_global_id(),
         DataStreamVals, DataStreamAccs, ReadDataStreamIndices);
+      
+      auto ProtectedDataStreamVals
+        = getReferenceTuple(DataStreamVals, DataStreamTuple, DataStreamIndices);
 
-      auto ArgTuple = std::tuple_cat(ReducersTuple, DataStreamVals);
+      auto ArgTuple = std::tuple_cat(ReducersTuple, ProtectedDataStreamVals);
       auto ArgIndices = std::index_sequence<RIs..., DSIs...>();
       
       // The .MValue field of each of the elements in ArgTuple
@@ -2385,7 +2388,7 @@ private:
             ONEAPI::detail::IsWriteableDataStreamPredicate{},
             DataStreamIndices);
       ONEAPI::detail::writeTupleValueToStream(NDIt.get_global_id(),
-        DataStreamAccs, DataStreamVals, WriteDataStreamIndices);
+        DataStreamAccs, ProtectedDataStreamVals, WriteDataStreamIndices);
 
       // Only finish reductions if there are any.
       if (sizeof...(Reductions) > 0) {
