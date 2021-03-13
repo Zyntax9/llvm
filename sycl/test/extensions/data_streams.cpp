@@ -56,8 +56,8 @@ bool test2(queue q) {
       auto bStream = data_stream<int, 1, access::mode::read>(bBuff, cgh);
       auto cStream = data_stream<int, 1, access::mode::write>(cBuff, cgh);
 
-      cgh.parallel_for<class pow2>(nd_range(range{N}, range{64}),
-                                   aStream, bStream, cStream,
+      cgh.parallel_for<class vec_add>(nd_range(range{N}, range{64}),
+                                      aStream, bStream, cStream,
         [=](nd_item<1> item, const int &a, const int &b, int &c) {
           c = a + b;
         });
