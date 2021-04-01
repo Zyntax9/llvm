@@ -842,7 +842,7 @@ template <typename KernelName, typename KernelType, int Dims, class Reduction,
 enable_if_t<Reduction::has_fast_reduce && Reduction::has_fast_atomics>
 reduCGFuncImpl(handler &CGH, KernelType KernelFunc, const nd_range<Dims> &Range,
                Reduction &, typename Reduction::rw_accessor_type Out) {
-  using Name = typename get_reduction_main_kernel_name_t<
+  using Name = typename detail::get_reduction_main_kernel_name_t<
       KernelName, KernelType, Reduction::is_usm, IsPow2WG>::name;
   CGH.parallel_for<Name>(Range, [=](nd_item<Dims> NDIt) {
     // Call user's function. Reducer.MValue gets initialized there.
@@ -878,7 +878,7 @@ reduCGFuncImpl(handler &CGH, KernelType KernelFunc, const nd_range<Dims> &Range,
   size_t NLocalElements = WGSize + (IsPow2WG ? 0 : 1);
   auto LocalReds = Reduction::getReadWriteLocalAcc(NLocalElements, CGH);
 
-  using Name = typename get_reduction_main_kernel_name_t<
+  using Name = typename detail::get_reduction_main_kernel_name_t<
       KernelName, KernelType, Reduction::is_usm, IsPow2WG>::name;
   CGH.parallel_for<Name>(Range, [=](nd_item<Dims> NDIt) {
     // Call user's functions. Reducer.MValue gets initialized there.
@@ -964,7 +964,7 @@ reduCGFuncImpl(handler &CGH, KernelType KernelFunc, const nd_range<Dims> &Range,
   bool IsUpdateOfUserVar =
       !Reduction::is_usm && !Redu.initializeToIdentity() && NWorkGroups == 1;
 
-  using Name = typename get_reduction_main_kernel_name_t<
+  using Name = typename detail::get_reduction_main_kernel_name_t<
       KernelName, KernelType, Reduction::is_usm, IsPow2WG>::name;
   CGH.parallel_for<Name>(Range, [=](nd_item<Dims> NDIt) {
     // Call user's functions. Reducer.MValue gets initialized there.
@@ -1010,7 +1010,7 @@ reduCGFuncImpl(handler &CGH, KernelType KernelFunc, const nd_range<Dims> &Range,
   size_t NumLocalElements = WGSize + (IsPow2WG ? 0 : 1);
   auto LocalReds = Reduction::getReadWriteLocalAcc(NumLocalElements, CGH);
   typename Reduction::result_type ReduIdentity = Redu.getIdentity();
-  using Name = typename get_reduction_main_kernel_name_t<
+  using Name = typename detail::get_reduction_main_kernel_name_t<
       KernelName, KernelType, Reduction::is_usm, IsPow2WG>::name;
   auto BOp = Redu.getBinaryOperation();
   CGH.parallel_for<Name>(Range, [=](nd_item<Dims> NDIt) {
@@ -1274,20 +1274,20 @@ void reduAuxCGFuncImpl(handler &CGH, size_t NWorkItems, size_t NWorkGroups,
   std::conditional_t<IsOneWG, IsNonUsmReductionPredicate,
                      EmptyReductionPredicate>
       Predicate;
-  auto AccReduIndices = filterSequence<Reductions...>(Predicate, ReduIndices);
+  auto AccReduIndices = detail::filterSequence<Reductions...>(Predicate, ReduIndices);
   associateReduAccsWithHandler(CGH, ReduTuple, AccReduIndices);
 
   size_t LocalAccSize = WGSize + (UniformPow2WG ? 0 : 1);
   auto LocalAccsTuple =
-      createReduLocalAccs<Reductions...>(LocalAccSize, CGH, ReduIndices);
+      detail::createReduLocalAccs<Reductions...>(LocalAccSize, CGH, ReduIndices);
   auto InAccsTuple =
-      getReadAccsToPreviousPartialReds(CGH, ReduTuple, ReduIndices);
+      detail::getReadAccsToPreviousPartialReds(CGH, ReduTuple, ReduIndices);
   auto OutAccsTuple =
-      createReduOutAccs<IsOneWG>(NWorkGroups, CGH, ReduTuple, ReduIndices);
-  auto IdentitiesTuple = getReduIdentities(ReduTuple, ReduIndices);
-  auto BOPsTuple = getReduBOPs(ReduTuple, ReduIndices);
+      detail::createReduOutAccs<IsOneWG>(NWorkGroups, CGH, ReduTuple, ReduIndices);
+  auto IdentitiesTuple = detail::getReduIdentities(ReduTuple, ReduIndices);
+  auto BOPsTuple = detail::getReduBOPs(ReduTuple, ReduIndices);
   auto InitToIdentityProps =
-      getInitToIdentityProperties(ReduTuple, ReduIndices);
+      detail::getInitToIdentityProperties(ReduTuple, ReduIndices);
 
   using Name =
       typename get_reduction_aux_kernel_name_t<KernelName, KernelType,
@@ -1309,11 +1309,11 @@ void reduAuxCGFuncImpl(handler &CGH, size_t NWorkItems, size_t NWorkGroups,
     for (size_t CurStep = PrevStep >> 1; CurStep > 0; CurStep >>= 1) {
       if (LID < CurStep) {
         // LocalAcc[LID] = BOp(LocalAcc[LID], LocalAcc[LID + CurStep]);
-        reduceReduLocalAccs(LID, LID + CurStep, LocalAccsTuple, BOPsTuple,
+        detail::reduceReduLocalAccs(LID, LID + CurStep, LocalAccsTuple, BOPsTuple,
                             ReduIndices);
       } else if (!UniformPow2WG && LID == CurStep && (PrevStep & 0x1)) {
         // LocalAcc[WGSize] = BOp(LocalAcc[WGSize], LocalAcc[PrevStep - 1]);
-        reduceReduLocalAccs(WGSize, PrevStep - 1, LocalAccsTuple, BOPsTuple,
+        detail::reduceReduLocalAccs(WGSize, PrevStep - 1, LocalAccsTuple, BOPsTuple,
                             ReduIndices);
       }
       NDIt.barrier();
@@ -1323,7 +1323,7 @@ void reduAuxCGFuncImpl(handler &CGH, size_t NWorkItems, size_t NWorkGroups,
     // Compute the partial sum/reduction for the work-group.
     if (LID == 0) {
       size_t GrID = NDIt.get_group_linear_id();
-      writeReduSumsToOutAccs<UniformPow2WG, IsOneWG>(
+      detail::writeReduSumsToOutAccs<UniformPow2WG, IsOneWG>(
           GrID, WGSize, (std::tuple<Reductions...> *)nullptr, OutAccsTuple,
           LocalAccsTuple, BOPsTuple, IdentitiesTuple, InitToIdentityProps,
           ReduIndices);
