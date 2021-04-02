@@ -66,6 +66,15 @@ template <typename T> struct AreAllButLastValidParam<T> {
   static constexpr bool value = !IsValidParam<T>::value;
 };
 
+template <typename FirstT, typename... RestT> struct ReductionParamCount {
+  static constexpr size_t value = 
+    ReductionParamCount<FirstT>::value + ReductionParamCount<RestT...>::value;
+};
+
+template <typename T> struct ReductionParamCount<T> {
+  static constexpr size_t value = IsReduction<T>::value ? 1 : 0;
+};
+
 // Converts a tuple of integrals to an index sequence.
 template <typename Tuple> struct tuple_to_index_sequence;
 

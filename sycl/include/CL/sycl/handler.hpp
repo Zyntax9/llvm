@@ -1337,7 +1337,8 @@ public:
   // seem efficient.
   template <typename KernelName = detail::auto_name, typename KernelType,
             int Dims, typename Reduction>
-  detail::enable_if_t<Reduction::has_fast_atomics>
+  detail::enable_if_t<ONEAPI::detail::IsReduction<Reduction>::value
+                      && Reduction::has_fast_atomics>
   parallel_for(nd_range<Dims> Range, Reduction Redu,
                _KERNELFUNCPARAM(KernelFunc)) {
     shared_ptr_class<detail::queue_impl> QueueCopy = MQueue;
@@ -1369,7 +1370,8 @@ public:
   /// optimized implementations waiting for their turn of code-review.
   template <typename KernelName = detail::auto_name, typename KernelType,
             int Dims, typename Reduction>
-  detail::enable_if_t<!Reduction::has_fast_atomics>
+  detail::enable_if_t<ONEAPI::detail::IsReduction<Reduction>::value
+                      && !Reduction::has_fast_atomics>
   parallel_for(nd_range<Dims> Range, Reduction Redu,
                _KERNELFUNCPARAM(KernelFunc)) {
     // This parallel_for() is lowered to the following sequence:
@@ -1443,11 +1445,13 @@ public:
     }
   }
 
-  // This version of parallel_for may handle one or more reductions packed in
+  // This version of parallel_for may handle one or more reductions or data
+  // streams packed in
   // \p Rest argument. Note thought that the last element in \p Rest pack is
   // the kernel function.
-  // TODO: this variant is currently enabled for 2+ reductions only as the
-  // versions handling 1 reduction variable are more efficient right now.
+  // TODO: this variant is currently enabled for 2+ parameters or a single data
+  // stream only, as the versions handling 1 reduction variable are more
+  // efficient right now.
   //
   // Algorithm:
   // 1) discard_write accessor (DWAcc), InitializeToIdentity = true:
@@ -1479,7 +1483,9 @@ public:
   //    c) Repeat the steps (a) and (b) to get one final sum.
   template <typename KernelName = detail::auto_name, int Dims,
             typename... RestT>
-  std::enable_if_t<(sizeof...(RestT) >= 3 &&
+  std::enable_if_t<((sizeof...(RestT) >= 3 ||
+                     (sizeof...(RestT) == 2 &&
+                      ONEAPI::detail::ReductionParamCount<RestT...>::value == 0)) &&
                     ONEAPI::detail::AreAllButLastValidParam<RestT...>::value)>
   parallel_for(nd_range<Dims> Range, RestT... Rest) {
     std::tuple<RestT...> ArgsTuple(Rest...);
@@ -2371,9 +2377,9 @@ private:
             ONEAPI::detail::IsReadableDataStreamPredicate{}, DataStreamIndices);
       ONEAPI::detail::readStreamValueToTuple(NDIt.get_global_id(),
         DataStreamVals, DataStreamAccs, ReadDataStreamIndices);
-      
-      auto ProtectedDataStreamVals
-        = getReferenceTuple(DataStreamVals, DataStreamTuple, DataStreamIndices);
+
+      auto ProtectedDataStreamVals = ONEAPI::detail::getReferenceTuple(
+        DataStreamVals, DataStreamTuple, DataStreamIndices);
 
       auto ArgTuple = std::tuple_cat(ReducersTuple, ProtectedDataStreamVals);
       auto ArgIndices = std::index_sequence<RIs..., DSIs...>();

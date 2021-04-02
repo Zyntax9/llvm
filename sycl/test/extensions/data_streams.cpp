@@ -6,6 +6,34 @@ using namespace sycl::ONEAPI;
 
 constexpr size_t N = 1024;
 
+bool test0(queue q) {
+  int A[N];
+  for (size_t i = 0; i < N; ++i) {
+    A[i] = i;
+  }
+
+  {
+    buffer<int> aBuff{A, range{N}};
+    q.submit([&](handler &cgh) {
+      auto aStream = data_stream<int, 1, access::mode::read_write>(aBuff, cgh);
+
+      cgh.parallel_for<class add_one>(nd_range(range{N}, range{64}), aStream,
+        [=](nd_item<1> item, int &a) {
+          a += 1;
+        });
+    });
+  }
+
+  
+  for (size_t i = 0; i < N; ++i) {
+    if (A[i] != i + 1) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool test1(queue q) {
   int A[N];
   for (size_t i = 0; i < N; ++i) {
@@ -74,6 +102,7 @@ bool test2(queue q) {
 
 int main() {
   queue q;
+  assert(test0(q) && "Test 0 failed");
   assert(test1(q) && "Test 1 failed");
   assert(test2(q) && "Test 2 failed");
   std::cout << "Test passed." << std::endl;
