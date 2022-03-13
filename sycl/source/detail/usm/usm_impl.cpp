@@ -13,6 +13,7 @@
 #include <CL/sycl/device.hpp>
 #include <CL/sycl/usm.hpp>
 #include <detail/queue_impl.hpp>
+#include <detail/usm/usm_impl.hpp>
 
 #include <array>
 #include <cassert>
@@ -112,16 +113,14 @@ void *alignedAllocHost(size_t Alignment, size_t Size, const context &Ctxt,
   return RetVal;
 }
 
-void *alignedAlloc(size_t Alignment, size_t Size, const context &Ctxt,
-                   const device &Dev, alloc Kind,
-                   const detail::code_location &CL,
-                   const property_list &PropList = {}) {
-  XPTI_CREATE_TRACEPOINT(CL);
+void *alignedAlloc(size_t Alignment, size_t Size, const context_impl *CtxImpl,
+                   const device_impl *DevImpl, alloc Kind,
+                   const property_list &PropList) {
   void *RetVal = nullptr;
   if (Size == 0)
     return nullptr;
 
-  if (Ctxt.is_host()) {
+  if (CtxImpl->is_host()) {
     if (Kind == alloc::unknown) {
       RetVal = nullptr;
     } else {
@@ -139,7 +138,6 @@ void *alignedAlloc(size_t Alignment, size_t Size, const context &Ctxt,
       }
     }
   } else {
-    std::shared_ptr<context_impl> CtxImpl = detail::getSyclObjImpl(Ctxt);
     pi_context C = CtxImpl->getHandleRef();
     const detail::plugin &Plugin = CtxImpl->getPlugin();
     pi_result Error;
@@ -147,7 +145,7 @@ void *alignedAlloc(size_t Alignment, size_t Size, const context &Ctxt,
 
     switch (Kind) {
     case alloc::device: {
-      Id = detail::getSyclObjImpl(Dev)->getHandleRef();
+      Id = DevImpl->getHandleRef();
 
       std::array<pi_usm_mem_properties, 3> Props;
       auto PropsIter = Props.begin();
@@ -155,7 +153,7 @@ void *alignedAlloc(size_t Alignment, size_t Size, const context &Ctxt,
       // Buffer location is only supported on FPGA devices
       if (PropList.has_property<cl::sycl::ext::intel::experimental::property::
                                     usm::buffer_location>() &&
-          Dev.has_extension("cl_intel_mem_alloc_buffer_location")) {
+          DevImpl->has_extension("cl_intel_mem_alloc_buffer_location")) {
         *PropsIter++ = PI_MEM_USM_ALLOC_BUFFER_LOCATION;
         *PropsIter++ = PropList
                            .get_property<cl::sycl::ext::intel::experimental::
@@ -172,7 +170,7 @@ void *alignedAlloc(size_t Alignment, size_t Size, const context &Ctxt,
       break;
     }
     case alloc::shared: {
-      Id = detail::getSyclObjImpl(Dev)->getHandleRef();
+      Id = DevImpl->getHandleRef();
 
       std::array<pi_usm_mem_properties, 5> Props;
       auto PropsIter = Props.begin();
@@ -185,7 +183,7 @@ void *alignedAlloc(size_t Alignment, size_t Size, const context &Ctxt,
 
       if (PropList.has_property<cl::sycl::ext::intel::experimental::property::
                                     usm::buffer_location>() &&
-          Dev.has_extension("cl_intel_mem_alloc_buffer_location")) {
+          DevImpl->has_extension("cl_intel_mem_alloc_buffer_location")) {
         *PropsIter++ = PI_MEM_USM_ALLOC_BUFFER_LOCATION;
         *PropsIter++ = PropList
                            .get_property<cl::sycl::ext::intel::experimental::
@@ -217,19 +215,31 @@ void *alignedAlloc(size_t Alignment, size_t Size, const context &Ctxt,
   return RetVal;
 }
 
-void free(void *Ptr, const context &Ctxt, const detail::code_location &CL) {
+void *alignedAlloc(size_t Alignment, size_t Size, const context &Ctxt,
+                   const device &Dev, alloc Kind,
+                   const detail::code_location &CL,
+                   const property_list &PropList = {}) {
   XPTI_CREATE_TRACEPOINT(CL);
+  return alignedAlloc(Alignment, Size, getSyclObjImpl(Ctxt).get(),
+                      getSyclObjImpl(Dev).get(), Kind);
+}
+
+void free(void *Ptr, const context_impl *CtxImpl) {
   if (Ptr == nullptr)
     return;
-  if (Ctxt.is_host()) {
+  if (CtxImpl->is_host()) {
     // need to use alignedFree here for Windows
     detail::OSUtil::alignedFree(Ptr);
   } else {
-    std::shared_ptr<context_impl> CtxImpl = detail::getSyclObjImpl(Ctxt);
     pi_context C = CtxImpl->getHandleRef();
     const detail::plugin &Plugin = CtxImpl->getPlugin();
     Plugin.call<PiApiKind::piextUSMFree>(C, Ptr);
   }
+}
+
+void free(void *Ptr, const context &Ctxt, const detail::code_location &CL) {
+  XPTI_CREATE_TRACEPOINT(CL);
+  free(Ptr, detail::getSyclObjImpl(Ctxt).get());
 }
 
 // For ABI compatibility

@@ -2770,6 +2770,8 @@
 ?mem_advise@queue@sycl@cl@@QEAA?AVevent@23@PEBX_KHAEBV?$vector@Vevent@sycl@cl@@V?$allocator@Vevent@sycl@cl@@@std@@@std@@@Z
 ?mem_advise@queue@sycl@cl@@QEAA?AVevent@23@PEBX_KHV423@@Z
 ?mem_advise@queue@sycl@cl@@QEAA?AVevent@23@PEBX_KW4_pi_mem_advice@@@Z
+?memcpyFromDeviceGlobal@handler@sycl@cl@@AEAAXPEAXPEBX_K2@Z
+?memcpyToDeviceGlobal@handler@sycl@cl@@AEAAXPEBX0_K1@Z
 ?memcpy@handler@sycl@cl@@QEAAXPEAXPEBX_K@Z
 ?memcpy@queue@sycl@cl@@QEAA?AVevent@23@PEAXPEBX_K@Z
 ?memcpy@queue@sycl@cl@@QEAA?AVevent@23@PEAXPEBX_KAEBV?$vector@Vevent@sycl@cl@@V?$allocator@Vevent@sycl@cl@@@std@@@std@@@Z

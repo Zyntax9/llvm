@@ -9,6 +9,7 @@
 #pragma once
 #include <CL/sycl/detail/common.hpp>
 #include <CL/sycl/detail/device_binary_image.hpp>
+#include <CL/sycl/detail/device_global_map.hpp>
 #include <CL/sycl/detail/export.hpp>
 #include <CL/sycl/detail/os_util.hpp>
 #include <CL/sycl/detail/pi.hpp>
@@ -54,6 +55,8 @@ using ContextImplPtr = std::shared_ptr<context_impl>;
 class device_impl;
 using DeviceImplPtr = std::shared_ptr<device_impl>;
 class program_impl;
+class queue_impl;
+class event_impl;
 // DeviceLibExt is shared between sycl runtime and sycl-post-link tool.
 // If any update is made here, need to sync with DeviceLibExt definition
 // in llvm/tools/sycl-post-link/sycl-post-link.cpp
@@ -83,6 +86,11 @@ public:
                                       const context &Context,
                                       const device &Device,
                                       bool JITCompilationIsRequired = false);
+  RTDeviceBinaryImage &
+  getDeviceImage(OSModuleHandle M,
+                 const DeviceGlobalMapEntry *DeviceGlobalEntry,
+                 const context &Context, const device &Device,
+                 bool JITCompilationIsRequired = false);
   RT::PiProgram createPIProgram(const RTDeviceBinaryImage &Img,
                                 const context &Context, const device &Device);
   /// Creates a PI program using either a cached device code binary if present
@@ -193,6 +201,23 @@ public:
   // Returns true if any available image is compatible with the device Dev.
   bool hasCompatibleImage(const device &Dev);
 
+  // The function gets a device_global entry identified by the unique ID from
+  // the device_global map.
+  DeviceGlobalMapEntry *getDeviceGlobalEntry(const std::string &UniqueId);
+
+  // The function gets a device_global entry identified by the pointer to the
+  // device_global object from the device_global map.
+  DeviceGlobalMapEntry *getDeviceGlobalEntry(const void *DeviceGlobalPtr);
+
+  // The function gets multiple device_global entries identified by their unique
+  // IDs from the device_global map.
+  std::vector<DeviceGlobalMapEntry *>
+  getDeviceGlobalEntries(const std::vector<std::string> &UniqueIds,
+                         bool ExcludeDeviceImageScopeDecorated = false);
+
+  device_image_plain ProgramManager::getDeviceImageFromBinaryImage(
+      RTDeviceBinaryImage *BinImage, const context &Ctx, const device &Dev);
+
   // The function returns a vector of SYCL device images that are compiled with
   // the required state and at least one device from the passed list of devices.
   std::vector<device_image_plain> getSYCLDeviceImagesWithCompatibleState(
@@ -274,7 +299,7 @@ private:
   KernelSetId getKernelSetId(OSModuleHandle M,
                              const std::string &KernelName) const;
   /// Dumps image to current directory
-  void dumpImage(const RTDeviceBinaryImage &Img, KernelSetId KSId) const;
+  void dumpImage(const RTDeviceBinaryImage &Img) const;
 
   /// Add info on kernels using assert into cache
   void cacheKernelUsesAssertInfo(OSModuleHandle M, RTDeviceBinaryImage &Img);

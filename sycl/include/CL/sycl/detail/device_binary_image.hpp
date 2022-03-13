@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 #pragma once
 
+#include <CL/sycl/detail/common.hpp>
 #include <CL/sycl/detail/os_util.hpp>
 #include <CL/sycl/detail/pi.hpp>
 
@@ -33,6 +34,9 @@ public:
 
   OSModuleHandle getOSModuleHandle() const { return ModuleHandle; }
 
+  KernelSetId getKernelSetId() const { return AssociatedKernelSetId; }
+  void setKernelSetId(KernelSetId KSId) { AssociatedKernelSetId = KSId; }
+
   ~RTDeviceBinaryImage() override {}
 
   bool supportsSpecConstants() const {
@@ -48,6 +52,7 @@ public:
 
 protected:
   OSModuleHandle ModuleHandle;
+  KernelSetId AssociatedKernelSetId;
 };
 
 // Dynamically allocated device binary image, which de-allocates its binary

@@ -68,6 +68,12 @@ public:
 
   // Stores auxiliary resources used by internal operations.
   std::vector<std::shared_ptr<const void>> MAuxiliaryResources;
+
+  /// Offset into a device_global for copy operations.
+  size_t MOffset = 0;
+  /// Boolean flag for whether the device_global had the device_image_scope
+  /// property.
+  bool MIsDeviceImageScoped = false;
 };
 
 } // namespace detail

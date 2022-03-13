@@ -48,6 +48,16 @@ struct property_value
   using key_t = PropertyT;
 };
 
+template <typename PropertyT1, typename PropertyT2, typename... A,
+          typename... B>
+constexpr std::enable_if_t<detail::IsCompileTimeProperty<PropertyT1>::value ||
+                               detail::IsCompileTimeProperty<PropertyT2>::value,
+                           bool>
+operator==(const property_value<PropertyT1, A...> &,
+           const property_value<PropertyT2, B...> &) {
+  return false;
+}
+
 template <typename PropertyT, typename... A, typename... B>
 constexpr std::enable_if_t<detail::IsCompileTimeProperty<PropertyT>::value,
                            bool>
@@ -72,6 +82,7 @@ template <typename V, typename O, typename = void> struct is_property_value_of {
   static constexpr bool value =
       detail::IsRuntimeProperty<V>::value && is_property_key_of<V, O>::value;
 };
+
 // Specialization for compile-time-constant properties
 template <typename V>
 struct is_property_value<V, sycl::detail::void_t<typename V::key_t>>

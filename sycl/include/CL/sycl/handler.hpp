@@ -28,6 +28,7 @@
 #include <CL/sycl/property_list.hpp>
 #include <CL/sycl/sampler.hpp>
 #include <CL/sycl/stl.hpp>
+#include <sycl/ext/oneapi/device_global/device_global.hpp>
 
 #include <functional>
 #include <limits>
@@ -2612,6 +2613,51 @@ public:
   /// \param Advice is a device-defined advice for the specified allocation.
   void mem_advise(const void *Ptr, size_t Length, int Advice);
 
+  template <typename T, typename PropertyListT>
+  void memcpy(ext::oneapi::experimental::device_global<T, PropertyListT> &Dest,
+              const void *Src, size_t NumBytes = sizeof(T), size_t Offset = 0) {
+    if (sizeof(T) < Offset + NumBytes)
+      throw sycl::exception(make_error_code(errc::invalid),
+                            "Copy to device_global is out of bounds.");
+
+    constexpr bool IsDeviceImageScoped = PropertyListT::template has_property<
+        ext::oneapi::experimental::device_image_scope_key>();
+    memcpyToDeviceGlobal(&Dest, Src, IsDeviceImageScoped, NumBytes, Offset);
+  }
+
+  template <typename T, typename PropertyListT>
+  void
+  memcpy(void *Dest,
+         const ext::oneapi::experimental::device_global<T, PropertyListT> &Src,
+         size_t NumBytes = sizeof(T), size_t Offset = 0) {
+    if (sizeof(T) < Offset + NumBytes)
+      throw sycl::exception(make_error_code(errc::invalid),
+                            "Copy from device_global is out of bounds.");
+
+    constexpr bool IsDeviceImageScoped = PropertyListT::template has_property<
+        ext::oneapi::experimental::device_image_scope_key>();
+    memcpyFromDeviceGlobal(Dest, &Src, IsDeviceImageScoped, NumBytes, Offset);
+  }
+
+  template <typename T, typename PropertyListT>
+  void copy(const std::remove_all_extents_t<T> *Src,
+            ext::oneapi::experimental::device_global<T, PropertyListT> &Dest,
+            size_t Count = sizeof(T) / sizeof(std::remove_all_extents_t<T>),
+            size_t StartIndex = 0) {
+    this->memcpy(Dest, Src, Count * sizeof(std::remove_all_extents_t<T>),
+                 StartIndex * sizeof(std::remove_all_extents_t<T>));
+  }
+
+  template <typename T, typename PropertyListT>
+  void
+  copy(const ext::oneapi::experimental::device_global<T, PropertyListT> &Src,
+       std::remove_all_extents_t<T> *Dest,
+       size_t Count = sizeof(T) / sizeof(std::remove_all_extents_t<T>),
+       size_t StartIndex = 0) {
+    this->memcpy(Dest, Src, Count * sizeof(std::remove_all_extents_t<T>),
+                 StartIndex * sizeof(std::remove_all_extents_t<T>));
+  }
+
 private:
   std::shared_ptr<detail::queue_impl> MQueue;
   /// The storage for the arguments passed.
@@ -2729,6 +2775,14 @@ private:
     return detail::RoundedRangeKernel<TransformedArgType, Dims, KernelType>(
         NumWorkItems, KernelFunc);
   }
+
+  void memcpyToDeviceGlobal(const void *DeviceGlobalPtr, const void *Src,
+                            bool IsDeviceImageScoped, size_t NumBytes,
+                            size_t Offset);
+
+  void memcpyFromDeviceGlobal(void *Dest, const void *DeviceGlobalPtr,
+                              bool IsDeviceImageScoped, size_t NumBytes,
+                              size_t Offset);
 };
 } // namespace sycl
 } // __SYCL_INLINE_NAMESPACE(cl)
