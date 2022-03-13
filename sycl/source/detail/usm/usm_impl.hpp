@@ -1,4 +1,4 @@
-//==-------------------- device_global_map.hpp -----------------------------==//
+//==------------------ usm_impl.hpp - USM API Utils -------------*- C++-*---==//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -8,14 +8,20 @@
 
 #pragma once
 
+#include <CL/sycl/usm.hpp>
+
 __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl {
 namespace detail {
-namespace device_global_map {
+namespace usm {
 
-__SYCL_EXPORT void add(const void *DeviceGlobalPtr, const char *UniqueId);
+void *alignedAlloc(size_t Alignment, size_t Size, const context_impl *CtxImpl,
+                   const device_impl *DevImpl, cl::sycl::usm::alloc Kind,
+                   const property_list &PropList = {});
 
-} // namespace device_global_map
+void free(void *Ptr, const context_impl *CtxImpl);
+
+} // namespace usm
 } // namespace detail
 } // namespace sycl
 } // __SYCL_INLINE_NAMESPACE(cl)

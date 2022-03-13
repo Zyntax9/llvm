@@ -182,6 +182,20 @@ public:
                          pi_mem_advice Advice,
                          std::vector<RT::PiEvent> DepEvents,
                          RT::PiEvent &OutEvent);
+
+  static void copy_to_device_global(const void *DeviceGlobalPtr,
+                                    bool IsDeviceImageScoped,
+                                    QueueImplPtr Queue, size_t NumBytes,
+                                    size_t Offset, const void *SrcMem,
+                                    std::vector<RT::PiEvent> DepEvents,
+                                    RT::PiEvent *OutEvent);
+
+  static void copy_from_device_global(const void *DeviceGlobalPtr,
+                                      bool IsDeviceImageScoped,
+                                      QueueImplPtr Queue, size_t NumBytes,
+                                      size_t Offset, void *DstMem,
+                                      std::vector<RT::PiEvent> DepEvents,
+                                      RT::PiEvent *OutEvent);
 };
 } // namespace detail
 } // namespace sycl

@@ -72,6 +72,7 @@ template <typename V, typename O, typename = void> struct is_property_value_of {
   static constexpr bool value =
       detail::IsRuntimeProperty<V>::value && is_property_key_of<V, O>::value;
 };
+
 // Specialization for compile-time-constant properties
 template <typename V>
 struct is_property_value<V, sycl::detail::void_t<typename V::key_t>>

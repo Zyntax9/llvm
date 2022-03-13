@@ -969,6 +969,103 @@ void MemoryManager::advise_usm(const void *Ptr, QueueImplPtr Queue, size_t Len,
   advise_usm(Ptr, Queue, Len, Advice, DepEvents, &OutEvent);
 }
 
+static void memcpyToDeviceGlobalUSM(QueueImplPtr Queue,
+                                    DeviceGlobalMapEntry *DeviceGlobalEntry,
+                                    size_t NumBytes, size_t Offset,
+                                    const void *Src,
+                                    std::vector<RT::PiEvent> DepEvents,
+                                    RT::PiEvent *OutEvent) {
+  void *Dest = DeviceGlobalEntry->getOrAllocateDeviceGlobalUSM(
+      Queue->getDeviceImplPtr().get(), Queue->getContextImplPtr().get());
+  MemoryManager::copy_usm(Src, Queue, NumBytes,
+                          reinterpret_cast<char *>(Dest) + Offset, DepEvents,
+                          OutEvent);
+}
+
+static void memcpyFromDeviceGlobalUSM(QueueImplPtr Queue,
+                                      DeviceGlobalMapEntry *DeviceGlobalEntry,
+                                      size_t NumBytes, size_t Offset,
+                                      void *Dest,
+                                      std::vector<RT::PiEvent> DepEvents,
+                                      RT::PiEvent *OutEvent) {
+  void *Src = DeviceGlobalEntry->getOrAllocateDeviceGlobalUSM(
+      Queue->getDeviceImplPtr().get(), Queue->getContextImplPtr().get());
+  MemoryManager::copy_usm(reinterpret_cast<const char *>(Src) + Offset, Queue,
+                          NumBytes, Dest, DepEvents, OutEvent);
+}
+
+static void memcpyToDeviceGlobalDirect(QueueImplPtr Queue,
+                                       DeviceGlobalMapEntry *DeviceGlobalEntry,
+                                       size_t NumBytes, size_t Offset,
+                                       const void *Src,
+                                       std::vector<RT::PiEvent> DepEvents,
+                                       RT::PiEvent *OutEvent) {
+  // TODO: Implement.
+  throw sycl::exception(
+      make_error_code(errc::invalid),
+      "Copy to device_global with device_image_scope is not yet implemented.");
+}
+
+static void memcpyFromDeviceGlobalDirect(
+    QueueImplPtr Queue, DeviceGlobalMapEntry *DeviceGlobalEntry,
+    size_t NumBytes, size_t Offset, void *Dest,
+    std::vector<RT::PiEvent> DepEvents, RT::PiEvent *OutEvent) {
+  // TODO: Implement.
+  throw sycl::exception(make_error_code(errc::invalid),
+                        "Copy from device_global with device_image_scope is "
+                        "not yet implemented.");
+}
+
+void MemoryManager::copy_to_device_global(const void *DeviceGlobalPtr,
+                                          bool IsDeviceImageScoped,
+                                          QueueImplPtr Queue, size_t NumBytes,
+                                          size_t Offset, const void *SrcMem,
+                                          std::vector<RT::PiEvent> DepEvents,
+                                          RT::PiEvent *OutEvent) {
+  DeviceGlobalMapEntry *DGEntry =
+      detail::ProgramManager::getInstance().getDeviceGlobalEntry(
+          DeviceGlobalPtr);
+  assert(DGEntry &&
+         DGEntry->MIsDeviceImageScopeDecorated == IsDeviceImageScoped &&
+         "Invalid copy operation for device_global.");
+
+  if (DGEntry->MDeviceGlobalTSize < Offset + NumBytes)
+    throw sycl::exception(make_error_code(errc::invalid),
+                          "Copy to device_global is out of bounds.");
+
+  if (IsDeviceImageScoped)
+    memcpyToDeviceGlobalDirect(Queue, DGEntry, NumBytes, Offset, SrcMem,
+                               DepEvents, OutEvent);
+  else
+    memcpyToDeviceGlobalUSM(Queue, DGEntry, NumBytes, Offset, SrcMem, DepEvents,
+                            OutEvent);
+}
+
+void MemoryManager::copy_from_device_global(const void *DeviceGlobalPtr,
+                                            bool IsDeviceImageScoped,
+                                            QueueImplPtr Queue, size_t NumBytes,
+                                            size_t Offset, void *DstMem,
+                                            std::vector<RT::PiEvent> DepEvents,
+                                            RT::PiEvent *OutEvent) {
+  DeviceGlobalMapEntry *DGEntry =
+      detail::ProgramManager::getInstance().getDeviceGlobalEntry(
+          DeviceGlobalPtr);
+  assert(DGEntry &&
+         DGEntry->MIsDeviceImageScopeDecorated == IsDeviceImageScoped &&
+         "Invalid copy operation for device_global.");
+
+  if (DGEntry->MDeviceGlobalTSize < Offset + NumBytes)
+    throw sycl::exception(make_error_code(errc::invalid),
+                          "Copy from device_global is out of bounds.");
+
+  if (IsDeviceImageScoped)
+    memcpyFromDeviceGlobalDirect(Queue, DGEntry, NumBytes, Offset, DstMem,
+                                 DepEvents, OutEvent);
+  else
+    memcpyFromDeviceGlobalUSM(Queue, DGEntry, NumBytes, Offset, DstMem,
+                              DepEvents, OutEvent);
+}
+
 } // namespace detail
 } // namespace sycl
 } // __SYCL_INLINE_NAMESPACE(cl)

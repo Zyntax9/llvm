@@ -9,32 +9,45 @@
 #pragma once
 
 #include <cstdint>
-#include <unordered_map>
+#include <map>
+#include <mutex>
 
 __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl {
 namespace detail {
 
 // Forward declaration
+class context_impl;
 class device_impl;
 
 struct DeviceGlobalMapEntry {
+  std::string MUniqueId;
   // Pointer to the device_global on host.
-  void *MDeviceGlobalPtr;
+  const void *MDeviceGlobalPtr;
   // Size of the underlying type in the device_global.
   std::uint32_t MDeviceGlobalTSize;
   // True if the device_global has been decorated with device_image_scope
   bool MIsDeviceImageScopeDecorated;
-  // Map between devices and corresponding USM allocations for the
-  // device_global. This should always be empty if MIsDeviceImageScopeDecorated
-  // is true.
-  std::unordered_map<std::shared_ptr<device_impl>, void *> MDeviceToUSMPtrMap;
 
-  // Constructor only initializes with the pointer to the device_global as the
-  // additional information is loaded after.
-  DeviceGlobalMapEntry(void *DeviceGlobalPtr)
-      : MDeviceGlobalPtr(DeviceGlobalPtr), MDeviceGlobalTSize(0),
-        MIsDeviceImageScopeDecorated(false) {}
+  // Constructor for only initializing ID and pointer. The other members will
+  // be initialized later.
+  DeviceGlobalMapEntry(std::string UniqueId, const void *DeviceGlobalPtr)
+      : MUniqueId(UniqueId), MDeviceGlobalPtr(DeviceGlobalPtr),
+        MDeviceGlobalTSize(0), MIsDeviceImageScopeDecorated(false) {}
+
+  // Constructor for only initializing ID, type size, and device image scope
+  // flag. The pointer to the device global will be initialized later.
+  DeviceGlobalMapEntry(std::string UniqueId, std::uint32_t DeviceGlobalTSize,
+                       bool IsDeviceImageScopeDecorated)
+      : MUniqueId(UniqueId), MDeviceGlobalPtr(nullptr),
+        MDeviceGlobalTSize(DeviceGlobalTSize),
+        MIsDeviceImageScopeDecorated(IsDeviceImageScopeDecorated) {}
+
+  void initialize(const void *DeviceGlobalPtr) {
+    assert(!MDeviceGlobalPtr &&
+           "Device global pointer has already been initialized.");
+    MDeviceGlobalPtr = DeviceGlobalPtr;
+  }
 
   void initialize(std::uint32_t DeviceGlobalTSize,
                   bool IsDeviceImageScopeDecorated) {
@@ -44,6 +57,18 @@ struct DeviceGlobalMapEntry {
     MDeviceGlobalTSize = DeviceGlobalTSize;
     MIsDeviceImageScopeDecorated = IsDeviceImageScopeDecorated;
   }
+
+  void *getOrAllocateDeviceGlobalUSM(const device_impl *DevImpl,
+                                     context_impl *CtxImpl);
+  void removeAssociatedResources(const context_impl *CtxImpl);
+
+private:
+  // Map from a device and a context to the associated USM allocation for the
+  // device_global. This should always be empty if MIsDeviceImageScopeDecorated
+  // is true.
+  std::map<std::pair<const device_impl *, const context_impl *>, void *>
+      MDeviceToUSMPtrMap;
+  std::mutex MDeviceToUSMPtrMapMutex;
 };
 
 } // namespace detail

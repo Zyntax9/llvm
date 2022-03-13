@@ -19,10 +19,12 @@
 #include <detail/context_impl.hpp>
 #include <detail/device_image_impl.hpp>
 #include <detail/device_impl.hpp>
+#include <detail/event_impl.hpp>
 #include <detail/global_handler.hpp>
 #include <detail/persistent_device_code_cache.hpp>
 #include <detail/program_impl.hpp>
 #include <detail/program_manager/program_manager.hpp>
+#include <detail/queue_impl.hpp>
 #include <detail/spec_constant_impl.hpp>
 #include <sycl/ext/oneapi/experimental/spec_constant.hpp>
 
@@ -359,6 +361,8 @@ RT::PiProgram ProgramManager::createPIProgram(const RTDeviceBinaryImage &Img,
     NativePrograms[Res] = &Img;
   }
 
+  Ctx->addDeviceGlobalInitializer(Res, {Device}, &Img);
+
   if (DbgProgMgr > 1)
     std::cerr << "created program: " << Res
               << "; image format: " << getFormatStr(Format) << "\n";
@@ -576,6 +580,9 @@ RT::PiProgram ProgramManager::getBuiltPIProgram(
       std::lock_guard<std::mutex> Lock(MNativeProgramsMutex);
       NativePrograms[BuiltProgram.get()] = &Img;
     }
+
+    ContextImpl->addDeviceGlobalInitializer(
+        BuiltProgram.get(), {createSyclObjFromImpl<device>(Dev)}, &Img);
 
     // Save program to persistent cache if it is not there
     if (!DeviceCodeWasInCache)
@@ -1200,10 +1207,6 @@ void ProgramManager::addImages(pi_device_binaries DeviceBinary) {
 
         auto DeviceGlobals = Img->getDeviceGlobals();
         for (const pi_device_binary_property &DeviceGlobal : DeviceGlobals) {
-          auto Entry = m_DeviceGlobals.find(DeviceGlobal->Name);
-          assert(Entry != m_DeviceGlobals.end() &&
-                 "Device global has not been registered.");
-
           pi::ByteArray DeviceGlobalInfo =
               pi::DeviceBinaryProperty(DeviceGlobal).asByteArray();
 
@@ -1217,7 +1220,20 @@ void ProgramManager::addImages(pi_device_binaries DeviceBinary) {
               *reinterpret_cast<const std::uint32_t *>(&DeviceGlobalInfo[8]);
           const std::uint32_t DeviceImageScopeDecorated =
               *reinterpret_cast<const std::uint32_t *>(&DeviceGlobalInfo[12]);
-          Entry->second.initialize(TypeSize, DeviceImageScopeDecorated);
+
+          auto ExistingDeviceGlobal = m_DeviceGlobals.find(DeviceGlobal->Name);
+          if (ExistingDeviceGlobal != m_DeviceGlobals.end()) {
+            // If it has already been registered we update the information.
+            ExistingDeviceGlobal->second->initialize(TypeSize,
+                                                     DeviceImageScopeDecorated);
+          } else {
+            // If it has not already been registered we create a new entry.
+            // Note: Pointer to the device global is not available here, so it
+            //       cannot be set until registration happens.
+            auto EntryUPtr = std::make_unique<DeviceGlobalMapEntry>(
+                DeviceGlobal->Name, TypeSize, DeviceImageScopeDecorated);
+            m_DeviceGlobals.emplace(DeviceGlobal->Name, std::move(EntryUPtr));
+          }
         }
       }
       m_DeviceImages[KSId].reset(new std::vector<RTDeviceBinaryImageUPtr>());
@@ -1469,13 +1485,56 @@ kernel_id ProgramManager::getBuiltInKernelID(const std::string &KernelName) {
   return KernelID->second;
 }
 
-void ProgramManager::addDeviceGlobalEntry(void *DeviceGlobalPtr,
-                                          const char *UniqueId) {
+void ProgramManager::addOrInitDeviceGlobalEntry(const void *DeviceGlobalPtr,
+                                                const char *UniqueId) {
   std::lock_guard<std::mutex> DeviceGlobalsGuard(m_DeviceGlobalsMutex);
 
-  assert(m_DeviceGlobals.find(UniqueId) == m_DeviceGlobals.end() &&
-         "Device global has already been registered.");
-  m_DeviceGlobals.insert({UniqueId, DeviceGlobalMapEntry(DeviceGlobalPtr)});
+  auto ExistingDeviceGlobal = m_DeviceGlobals.find(UniqueId);
+  if (ExistingDeviceGlobal != m_DeviceGlobals.end()) {
+    ExistingDeviceGlobal->second->initialize(DeviceGlobalPtr);
+    m_Ptr2DeviceGlobal.insert(
+        {DeviceGlobalPtr, ExistingDeviceGlobal->second.get()});
+    return;
+  }
+
+  auto EntryUPtr =
+      std::make_unique<DeviceGlobalMapEntry>(UniqueId, DeviceGlobalPtr);
+  auto NewEntry = m_DeviceGlobals.emplace(UniqueId, std::move(EntryUPtr));
+  m_Ptr2DeviceGlobal.insert({DeviceGlobalPtr, NewEntry.first->second.get()});
+}
+
+DeviceGlobalMapEntry *
+ProgramManager::getDeviceGlobalEntry(const std::string &UniqueId) {
+  std::lock_guard<std::mutex> DeviceGlobalsGuard(m_DeviceGlobalsMutex);
+  auto Entry = m_DeviceGlobals.find(UniqueId);
+  assert(Entry != m_DeviceGlobals.end() && "Device global entry not found");
+  return Entry->second.get();
+}
+
+DeviceGlobalMapEntry *
+ProgramManager::getDeviceGlobalEntry(const void *DeviceGlobalPtr) {
+  std::lock_guard<std::mutex> DeviceGlobalsGuard(m_DeviceGlobalsMutex);
+  auto Entry = m_Ptr2DeviceGlobal.find(DeviceGlobalPtr);
+  assert(Entry != m_Ptr2DeviceGlobal.end() && "Device global entry not found");
+  return Entry->second;
+}
+
+std::vector<DeviceGlobalMapEntry *> ProgramManager::getDeviceGlobalEntries(
+    const std::vector<std::string> &UniqueIds,
+    bool ExcludeDeviceImageScopeDecorated) {
+  std::vector<DeviceGlobalMapEntry *> FoundEntries;
+  FoundEntries.reserve(UniqueIds.size());
+
+  std::lock_guard<std::mutex> DeviceGlobalsGuard(m_DeviceGlobalsMutex);
+  for (const std::string &UniqueId : UniqueIds) {
+    auto DeviceGlobalEntry = m_DeviceGlobals.find(UniqueId);
+    assert(DeviceGlobalEntry != m_DeviceGlobals.end() &&
+           "Device global not found in map.");
+    if (ExcludeDeviceImageScopeDecorated &&
+        !DeviceGlobalEntry->second->MIsDeviceImageScopeDecorated)
+      FoundEntries.push_back(DeviceGlobalEntry->second.get());
+  }
+  return FoundEntries;
 }
 
 std::vector<device_image_plain>
@@ -1887,6 +1946,8 @@ device_image_plain ProgramManager::build(const device_image_plain &DeviceImage,
       std::lock_guard<std::mutex> Lock(MNativeProgramsMutex);
       NativePrograms[BuiltProgram.get()] = &Img;
     }
+
+    ContextImpl->addDeviceGlobalInitializer(BuiltProgram.get(), Devs, &Img);
 
     // Save program to persistent cache if it is not there
     if (!DeviceCodeWasInCache)

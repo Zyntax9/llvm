@@ -170,6 +170,8 @@ public:
     CodeplayInteropTask = 13,
     CodeplayHostTask = 14,
     AdviseUSM = 15,
+    CopyToDeviceGlobal = 16,
+    CopyFromDeviceGlobal = 17,
   };
 
   CG(CGTYPE Type, std::vector<std::vector<char>> ArgsStorage,
@@ -520,6 +522,68 @@ public:
            std::move(SharedPtrStorage), std::move(Requirements),
            std::move(Events), std::move(loc)),
         MEventsWaitWithBarrier(std::move(EventsWaitWithBarrier)) {}
+};
+
+/// "Copy to device_global" command group class.
+class CGCopyToDeviceGlobal : public CG {
+  void *MSrc;
+  void *MDeviceGlobalPtr;
+  bool MIsDeviceImageScoped;
+  size_t MNumBytes;
+  size_t MOffset;
+
+public:
+  CGCopyToDeviceGlobal(
+      void *Src, void *DeviceGlobalPtr, bool IsDeviceImageScoped,
+      size_t NumBytes, size_t Offset,
+      std::vector<std::vector<char>> ArgsStorage,
+      std::vector<detail::AccessorImplPtr> AccStorage,
+      std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+      std::vector<Requirement *> Requirements,
+      std::vector<detail::EventImplPtr> Events, detail::code_location loc = {})
+      : CG(CopyToDeviceGlobal, std::move(ArgsStorage), std::move(AccStorage),
+           std::move(SharedPtrStorage), std::move(Requirements),
+           std::move(Events), std::move(loc)),
+        MSrc(Src), MDeviceGlobalPtr(DeviceGlobalPtr),
+        MIsDeviceImageScoped(IsDeviceImageScoped), MNumBytes(NumBytes),
+        MOffset(Offset) {}
+
+  void *getSrc() { return MSrc; }
+  void *getDeviceGlobalPtr() { return MDeviceGlobalPtr; }
+  bool isDeviceImageScoped() { return MIsDeviceImageScoped; }
+  size_t getNumBytes() { return MNumBytes; }
+  size_t getOffset() { return MOffset; }
+};
+
+/// "Copy to device_global" command group class.
+class CGCopyFromDeviceGlobal : public CG {
+  void *MDeviceGlobalPtr;
+  void *MDest;
+  bool MIsDeviceImageScoped;
+  size_t MNumBytes;
+  size_t MOffset;
+
+public:
+  CGCopyFromDeviceGlobal(
+      void *DeviceGlobalPtr, void *Dest, bool IsDeviceImageScoped,
+      size_t NumBytes, size_t Offset,
+      std::vector<std::vector<char>> ArgsStorage,
+      std::vector<detail::AccessorImplPtr> AccStorage,
+      std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+      std::vector<Requirement *> Requirements,
+      std::vector<detail::EventImplPtr> Events, detail::code_location loc = {})
+      : CG(CopyFromDeviceGlobal, std::move(ArgsStorage), std::move(AccStorage),
+           std::move(SharedPtrStorage), std::move(Requirements),
+           std::move(Events), std::move(loc)),
+        MDeviceGlobalPtr(DeviceGlobalPtr), MDest(Dest),
+        MIsDeviceImageScoped(IsDeviceImageScoped), MNumBytes(NumBytes),
+        MOffset(Offset) {}
+
+  void *getDeviceGlobalPtr() { return MDeviceGlobalPtr; }
+  void *getDest() { return MDest; }
+  bool isDeviceImageScoped() { return MIsDeviceImageScoped; }
+  size_t getNumBytes() { return MNumBytes; }
+  size_t getOffset() { return MOffset; }
 };
 
 } // namespace detail

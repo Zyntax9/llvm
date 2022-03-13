@@ -21,6 +21,7 @@
 #include <CL/sycl/info/info_desc.hpp>
 #include <CL/sycl/property_list.hpp>
 #include <CL/sycl/stl.hpp>
+#include <sycl/ext/oneapi/device_global/device_global.hpp>
 
 // Explicitly request format macros
 #ifndef __STDC_FORMAT_MACROS
@@ -681,6 +682,111 @@ public:
     });
   }
 
+  template <typename T, typename PropertyListT>
+  event memcpy(ext::oneapi::experimental::device_global<T, PropertyListT> &Dest,
+               const void *Src, size_t NumBytes, size_t Offset,
+               const std::vector<event> &DepEvents) {
+    constexpr bool IsDeviceImageScoped = PropertyListT::template has_property<
+        ext::oneapi::experimental::device_image_scope_key>();
+    return memcpyToDeviceGlobal(&Dest, Src, IsDeviceImageScoped, NumBytes,
+                                Offset, DepEvents);
+  }
+
+  template <typename T, typename PropertyListT>
+  event memcpy(ext::oneapi::experimental::device_global<T, PropertyListT> &Dest,
+               const void *Src, size_t NumBytes, size_t Offset,
+               event DepEvent) {
+    return this->memcpy(Dest, Src, NumBytes, Offset,
+                        std::vector<event>{DepEvent});
+  }
+
+  template <typename T, typename PropertyListT>
+  event memcpy(ext::oneapi::experimental::device_global<T, PropertyListT> &Dest,
+               const void *Src, size_t NumBytes = sizeof(T),
+               size_t Offset = 0) {
+    return this->memcpy(Dest, Src, NumBytes, Offset, std::vector<event>{});
+  }
+
+  template <typename T, typename PropertyListT>
+  event
+  memcpy(void *Dest,
+         const ext::oneapi::experimental::device_global<T, PropertyListT> &Src,
+         size_t NumBytes, size_t Offset, const std::vector<event> &DepEvents) {
+    constexpr bool IsDeviceImageScoped = PropertyListT::template has_property<
+        ext::oneapi::experimental::device_image_scope_key>();
+    return memcpyFromDeviceGlobal(Dest, &Src, IsDeviceImageScoped, NumBytes,
+                                  Offset, DepEvents);
+  }
+
+  template <typename T, typename PropertyListT>
+  event
+  memcpy(void *Dest,
+         const ext::oneapi::experimental::device_global<T, PropertyListT> &Src,
+         size_t NumBytes, size_t Offset, event DepEvent) {
+    return this->memcpy(Dest, Src, NumBytes, Offset,
+                        std::vector<event>{DepEvent});
+  }
+
+  template <typename T, typename PropertyListT>
+  event
+  memcpy(void *Dest,
+         const ext::oneapi::experimental::device_global<T, PropertyListT> &Src,
+         size_t NumBytes = sizeof(T), size_t Offset = 0) {
+    return this->memcpy(Dest, Src, NumBytes, Offset, std::vector<event>{});
+  }
+
+  template <typename T, typename PropertyListT>
+  event copy(const std::remove_all_extents_t<T> *Src,
+             ext::oneapi::experimental::device_global<T, PropertyListT> &Dest,
+             size_t Count, size_t StartIndex,
+             const std::vector<event> &DepEvents) {
+    return this->memcpy(Dest, Src, Count * sizeof(T), StartIndex * sizeof(T),
+                        DepEvents);
+  }
+
+  template <typename T, typename PropertyListT>
+  event copy(const std::remove_all_extents_t<T> *Src,
+             ext::oneapi::experimental::device_global<T, PropertyListT> &Dest,
+             size_t Count, size_t StartIndex, event DepEvent) {
+    return this->memcpy(Dest, Src, Count * sizeof(T), StartIndex * sizeof(T),
+                        DepEvent);
+  }
+
+  template <typename T, typename PropertyListT>
+  event copy(const std::remove_all_extents_t<T> *Src,
+             ext::oneapi::experimental::device_global<T, PropertyListT> &Dest,
+             size_t Count = sizeof(T) / sizeof(std::remove_all_extents_t<T>),
+             size_t StartIndex = 0) {
+    return this->memcpy(Dest, Src, Count * sizeof(T), StartIndex * sizeof(T));
+  }
+
+  template <typename T, typename PropertyListT>
+  event
+  copy(const ext::oneapi::experimental::device_global<T, PropertyListT> &Src,
+       std::remove_all_extents_t<T> *Dest, size_t Count, size_t StartIndex,
+       const std::vector<event> &DepEvents) {
+    return this->memcpy(Dest, Src, Count * sizeof(T), StartIndex * sizeof(T),
+                        DepEvents);
+  }
+
+  template <typename T, typename PropertyListT>
+  event
+  copy(const ext::oneapi::experimental::device_global<T, PropertyListT> &Src,
+       std::remove_all_extents_t<T> *Dest, size_t Count, size_t StartIndex,
+       event DepEvent) {
+    return this->memcpy(Dest, Src, Count * sizeof(T), StartIndex * sizeof(T),
+                        DepEvent);
+  }
+
+  template <typename T, typename PropertyListT>
+  event
+  copy(const ext::oneapi::experimental::device_global<T, PropertyListT> &Src,
+       std::remove_all_extents_t<T> *Dest,
+       size_t Count = sizeof(T) / sizeof(std::remove_all_extents_t<T>),
+       size_t StartIndex = 0) {
+    return this->memcpy(Dest, Src, Count * sizeof(T), StartIndex * sizeof(T));
+  }
+
   /// single_task version with a kernel represented as a lambda.
   ///
   /// \param KernelFunc is the Kernel functor or lambda
@@ -1181,6 +1287,15 @@ private:
   }
 
   buffer<detail::AssertHappened, 1> &getAssertHappenedBuffer();
+
+  event memcpyToDeviceGlobal(void *DeviceGlobalPtr, const void *Src,
+                             bool IsDeviceImageScope, size_t NumBytes,
+                             size_t Offset,
+                             const std::vector<event> &DepEvents);
+  event memcpyFromDeviceGlobal(void *Dest, const void *DeviceGlobalPtr,
+                               bool IsDeviceImageScope, size_t NumBytes,
+                               size_t Offset,
+                               const std::vector<event> &DepEvents);
 };
 
 namespace detail {
