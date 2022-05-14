@@ -26,6 +26,7 @@
 #include <detail/spec_constant_impl.hpp>
 #include <sycl/ext/oneapi/experimental/spec_constant.hpp>
 
+
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
@@ -41,7 +42,7 @@ __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl {
 namespace detail {
 
-using ContextImplPtr = std::shared_ptr<cl::sycl::detail::context_impl>;
+using ContextImplPtr = detail::shared_ptr<cl::sycl::detail::context_impl>;
 
 static constexpr int DbgProgMgr = 0;
 
@@ -1143,7 +1144,7 @@ void ProgramManager::addImages(pi_device_binaries DeviceBinary) {
         // ... and create a unique kernel ID for the entry
         auto It = m_KernelName2KernelIDs.find(EntriesIt->name);
         if (It == m_KernelName2KernelIDs.end()) {
-          std::shared_ptr<detail::kernel_id_impl> KernelIDImpl =
+          detail::shared_ptr<detail::kernel_id_impl> KernelIDImpl =
               std::make_shared<detail::kernel_id_impl>(EntriesIt->name);
           sycl::kernel_id KernelID =
               detail::createSyclObjFromImpl<sycl::kernel_id>(KernelIDImpl);
@@ -1424,7 +1425,7 @@ static bundle_state getBinImageState(const RTDeviceBinaryImage *BinImage) {
 
 static bool compatibleWithDevice(RTDeviceBinaryImage *BinImage,
                                  const device &Dev) {
-  const std::shared_ptr<detail::device_impl> &DeviceImpl =
+  const detail::shared_ptr<detail::device_impl> &DeviceImpl =
       detail::getSyclObjImpl(Dev);
   auto &Plugin = DeviceImpl->getPlugin();
 
@@ -1544,7 +1545,7 @@ ProgramManager::getSYCLDeviceImagesWithCompatibleState(
       if (!compatibleWithDevice(BinImage, Dev))
         continue;
 
-      std::shared_ptr<std::vector<sycl::kernel_id>> KernelIDs;
+      detail::shared_ptr<std::vector<sycl::kernel_id>> KernelIDs;
       // Collect kernel names for the image
       {
         std::lock_guard<std::mutex> KernelIDsGuard(m_KernelIDsMutex);
@@ -1681,7 +1682,7 @@ ProgramManager::compile(const device_image_plain &DeviceImage,
   // how they can be passed.
 
   // TODO: Probably we could have cached compiled device images.
-  const std::shared_ptr<device_image_impl> &InputImpl =
+  const detail::shared_ptr<device_image_impl> &InputImpl =
       getSyclObjImpl(DeviceImage);
 
   const detail::plugin &Plugin =
@@ -1757,7 +1758,7 @@ ProgramManager::link(const std::vector<device_image_plain> &DeviceImages,
   applyLinkOptionsFromEnvironment(LinkOptionsStr);
   if (LinkOptionsStr.empty()) {
     for (const device_image_plain &DeviceImage : DeviceImages) {
-      const std::shared_ptr<device_image_impl> &InputImpl =
+      const detail::shared_ptr<device_image_impl> &InputImpl =
           getSyclObjImpl(DeviceImage);
       appendLinkOptionsFromImage(LinkOptionsStr,
                                  *(InputImpl->get_bin_image_ref()));
@@ -1782,7 +1783,7 @@ ProgramManager::link(const std::vector<device_image_plain> &DeviceImages,
     Plugin.reportPiError(Error, "link()");
   }
 
-  std::shared_ptr<std::vector<kernel_id>> KernelIDs{new std::vector<kernel_id>};
+  detail::shared_ptr<std::vector<kernel_id>> KernelIDs{new std::vector<kernel_id>};
   for (const device_image_plain &DeviceImage : DeviceImages) {
     // Duplicates are not expected here, otherwise piProgramLink should fail
     KernelIDs->insert(
@@ -1812,7 +1813,7 @@ device_image_plain ProgramManager::build(const device_image_plain &DeviceImage,
                                          const property_list &PropList) {
   (void)PropList;
 
-  const std::shared_ptr<device_image_impl> &InputImpl =
+  const detail::shared_ptr<device_image_impl> &InputImpl =
       getSyclObjImpl(DeviceImage);
 
   const context Context = InputImpl->get_context();

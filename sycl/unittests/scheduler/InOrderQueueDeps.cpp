@@ -103,7 +103,7 @@ TEST_F(SchedulerTest, InOrderQueueDeps) {
       detail::getSyclObjImpl(InOrderQueue);
 
   device HostDevice;
-  std::shared_ptr<detail::queue_impl> DefaultHostQueue{
+  sycl::detail::shared_ptr<detail::queue_impl> DefaultHostQueue{
       new detail::queue_impl(detail::getSyclObjImpl(HostDevice), {}, {})};
 
   MockScheduler MS;

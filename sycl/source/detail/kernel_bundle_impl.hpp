@@ -18,6 +18,7 @@
 #include <detail/kernel_impl.hpp>
 #include <detail/program_manager/program_manager.hpp>
 
+
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -355,7 +356,7 @@ public:
 
   kernel
   get_kernel(const kernel_id &KernelID,
-             const std::shared_ptr<detail::kernel_bundle_impl> &Self) const {
+             const detail::shared_ptr<detail::kernel_bundle_impl> &Self) const {
 
     auto It = std::find_if(MDeviceImages.begin(), MDeviceImages.end(),
                            [&KernelID](const device_image_plain &DeviceImage) {
@@ -367,7 +368,7 @@ public:
                             "The kernel bundle does not contain the kernel "
                             "identified by kernelId.");
 
-    const std::shared_ptr<detail::device_image_impl> &DeviceImageImpl =
+    const detail::shared_ptr<detail::device_image_impl> &DeviceImageImpl =
         detail::getSyclObjImpl(*It);
 
     RT::PiKernel Kernel = nullptr;
@@ -376,7 +377,7 @@ public:
             MContext, KernelID.get_name(), /*PropList=*/{},
             DeviceImageImpl->get_program_ref());
 
-    std::shared_ptr<kernel_impl> KernelImpl = std::make_shared<kernel_impl>(
+    detail::shared_ptr<kernel_impl> KernelImpl = std::make_shared<kernel_impl>(
         Kernel, detail::getSyclObjImpl(MContext), DeviceImageImpl, Self);
 
     return detail::createSyclObjFromImpl<kernel>(KernelImpl);

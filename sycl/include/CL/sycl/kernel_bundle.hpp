@@ -17,6 +17,7 @@
 #include <CL/sycl/kernel.hpp>
 #include <CL/sycl/kernel_bundle_enums.hpp>
 
+
 #include <cassert>
 #include <memory>
 #include <set>
@@ -50,10 +51,10 @@ public:
 private:
   kernel_id(const char *Name);
 
-  kernel_id(const std::shared_ptr<detail::kernel_id_impl> &Impl)
+  kernel_id(const detail::shared_ptr<detail::kernel_id_impl> &Impl)
       : impl(std::move(Impl)) {}
 
-  std::shared_ptr<detail::kernel_id_impl> impl;
+  detail::shared_ptr<detail::kernel_id_impl> impl;
 
   template <class Obj>
   friend decltype(Obj::impl) detail::getSyclObjImpl(const Obj &SyclObject);
@@ -64,7 +65,7 @@ private:
 
 namespace detail {
 class device_image_impl;
-using DeviceImageImplPtr = std::shared_ptr<device_image_impl>;
+using DeviceImageImplPtr = detail::shared_ptr<device_image_impl>;
 
 // The class is used as a base for device_image for "untemplating" public
 // methods.
@@ -129,7 +130,7 @@ private:
 
 namespace detail {
 class kernel_bundle_impl;
-using KernelBundleImplPtr = std::shared_ptr<detail::kernel_bundle_impl>;
+using KernelBundleImplPtr = detail::shared_ptr<detail::kernel_bundle_impl>;
 
 // The class is used as a base for kernel_bundle to "untemplate" it's methods
 class __SYCL_EXPORT kernel_bundle_plain {
@@ -589,10 +590,10 @@ template <typename KernelName> bool is_compatible(const device &Dev) {
 namespace detail {
 
 // TODO: This is no longer in use. Remove when ABI break is allowed.
-__SYCL_EXPORT std::shared_ptr<detail::kernel_bundle_impl>
+__SYCL_EXPORT detail::shared_ptr<detail::kernel_bundle_impl>
 join_impl(const std::vector<detail::KernelBundleImplPtr> &Bundles);
 
-__SYCL_EXPORT std::shared_ptr<detail::kernel_bundle_impl>
+__SYCL_EXPORT detail::shared_ptr<detail::kernel_bundle_impl>
 join_impl(const std::vector<detail::KernelBundleImplPtr> &Bundles,
           bundle_state State);
 }
@@ -608,7 +609,7 @@ join(const std::vector<sycl::kernel_bundle<State>> &Bundles) {
   for (const sycl::kernel_bundle<State> &Bundle : Bundles)
     KernelBundleImpls.push_back(detail::getSyclObjImpl(Bundle));
 
-  std::shared_ptr<detail::kernel_bundle_impl> Impl =
+  detail::shared_ptr<detail::kernel_bundle_impl> Impl =
       detail::join_impl(KernelBundleImpls, State);
   return detail::createSyclObjFromImpl<kernel_bundle<State>>(Impl);
 }
@@ -619,7 +620,7 @@ join(const std::vector<sycl::kernel_bundle<State>> &Bundles) {
 
 namespace detail {
 
-__SYCL_EXPORT std::shared_ptr<detail::kernel_bundle_impl>
+__SYCL_EXPORT detail::shared_ptr<detail::kernel_bundle_impl>
 compile_impl(const kernel_bundle<bundle_state::input> &InputBundle,
              const std::vector<device> &Devs, const property_list &PropList);
 }
@@ -653,7 +654,7 @@ namespace detail {
 __SYCL_EXPORT std::vector<sycl::device> find_device_intersection(
     const std::vector<kernel_bundle<bundle_state::object>> &ObjectBundles);
 
-__SYCL_EXPORT std::shared_ptr<detail::kernel_bundle_impl>
+__SYCL_EXPORT detail::shared_ptr<detail::kernel_bundle_impl>
 link_impl(const std::vector<kernel_bundle<bundle_state::object>> &ObjectBundles,
           const std::vector<device> &Devs, const property_list &PropList);
 } // namespace detail
@@ -701,7 +702,7 @@ link(const kernel_bundle<bundle_state::object> &ObjectBundle,
 /////////////////////////
 
 namespace detail {
-__SYCL_EXPORT std::shared_ptr<detail::kernel_bundle_impl>
+__SYCL_EXPORT detail::shared_ptr<detail::kernel_bundle_impl>
 build_impl(const kernel_bundle<bundle_state::input> &InputBundle,
            const std::vector<device> &Devs, const property_list &PropList);
 }
@@ -733,7 +734,8 @@ build(const kernel_bundle<bundle_state::input> &InputBundle,
 namespace std {
 template <> struct hash<cl::sycl::kernel_id> {
   size_t operator()(const cl::sycl::kernel_id &KernelID) const {
-    return hash<std::shared_ptr<cl::sycl::detail::kernel_id_impl>>()(
+    return hash<
+        cl::sycl::detail::shared_ptr<cl::sycl::detail::kernel_id_impl>>()(
         cl::sycl::detail::getSyclObjImpl(KernelID));
   }
 };
@@ -741,7 +743,8 @@ template <> struct hash<cl::sycl::kernel_id> {
 template <cl::sycl::bundle_state State>
 struct hash<cl::sycl::device_image<State>> {
   size_t operator()(const cl::sycl::device_image<State> &DeviceImage) const {
-    return hash<std::shared_ptr<cl::sycl::detail::device_image_impl>>()(
+    return hash<
+        cl::sycl::detail::shared_ptr<cl::sycl::detail::device_image_impl>>()(
         cl::sycl::detail::getSyclObjImpl(DeviceImage));
   }
 };
@@ -749,7 +752,8 @@ struct hash<cl::sycl::device_image<State>> {
 template <cl::sycl::bundle_state State>
 struct hash<cl::sycl::kernel_bundle<State>> {
   size_t operator()(const cl::sycl::kernel_bundle<State> &KernelBundle) const {
-    return hash<std::shared_ptr<cl::sycl::detail::kernel_bundle_impl>>()(
+    return hash<
+        cl::sycl::detail::shared_ptr<cl::sycl::detail::kernel_bundle_impl>>()(
         cl::sycl::detail::getSyclObjImpl(KernelBundle));
   }
 };

@@ -16,8 +16,8 @@ struct TestCtx {
   queue &Q1;
   queue &Q2;
 
-  std::shared_ptr<detail::context_impl> Ctx1;
-  std::shared_ptr<detail::context_impl> Ctx2;
+  sycl::detail::shared_ptr<detail::context_impl> Ctx1;
+  sycl::detail::shared_ptr<detail::context_impl> Ctx2;
 
   pi_event EventCtx1 = reinterpret_cast<pi_event>(0x01);
   pi_event EventCtx2 = reinterpret_cast<pi_event>(0x02);
@@ -86,19 +86,20 @@ TEST_F(SchedulerTest, CommandsWaitForEvents) {
 
   TestContext.reset(new TestCtx(Q1, Q2));
 
-  std::shared_ptr<detail::event_impl> E1(
+  sycl::detail::shared_ptr<detail::event_impl> E1(
       new detail::event_impl(TestContext->EventCtx1, Q1.get_context()));
-  std::shared_ptr<detail::event_impl> E2(
+  sycl::detail::shared_ptr<detail::event_impl> E2(
       new detail::event_impl(TestContext->EventCtx2, Q2.get_context()));
 
   sycl::device HostDevice;
-  std::shared_ptr<detail::queue_impl> DefaultHostQueue(new detail::queue_impl(
-      detail::getSyclObjImpl(HostDevice), /*AsyncHandler=*/{},
-      /*PropList=*/{}));
+  sycl::detail::shared_ptr<detail::queue_impl> DefaultHostQueue(
+      new detail::queue_impl(detail::getSyclObjImpl(HostDevice),
+                             /*AsyncHandler=*/{},
+                             /*PropList=*/{}));
 
   MockCommand Cmd(DefaultHostQueue);
 
-  std::vector<std::shared_ptr<detail::event_impl>> Events;
+  std::vector<sycl::detail::shared_ptr<detail::event_impl>> Events;
   Events.push_back(E1);
   Events.push_back(E2);
 

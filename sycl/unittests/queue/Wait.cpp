@@ -149,7 +149,7 @@ TEST(QueueWait, QueueWaitTest) {
       auto acc = buf.template get_access<access::mode::read>(Cgh);
       Cgh.host_task([=]() { (void)acc; });
     });
-    std::shared_ptr<detail::event_impl> HostTaskEventImpl =
+    sycl::detail::shared_ptr<detail::event_impl> HostTaskEventImpl =
         detail::getSyclObjImpl(HostTaskEvent);
     auto *Cmd = static_cast<detail::Command *>(HostTaskEventImpl->getCommand());
     detail::Command *EmptyTask = *Cmd->MUsers.begin();

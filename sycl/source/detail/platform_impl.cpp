@@ -15,6 +15,7 @@
 #include <detail/platform_impl.hpp>
 #include <detail/platform_info.hpp>
 
+
 #include <algorithm>
 #include <cstring>
 #include <mutex>
@@ -25,7 +26,7 @@ __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl {
 namespace detail {
 
-using PlatformImplPtr = std::shared_ptr<platform_impl>;
+using PlatformImplPtr = detail::shared_ptr<platform_impl>;
 
 PlatformImplPtr platform_impl::getHostPlatformImpl() {
   static PlatformImplPtr HostImpl = std::make_shared<platform_impl>();
@@ -212,20 +213,20 @@ static void filterDeviceFilter(std::vector<RT::PiDevice> &PiDevices,
   Plugin.setLastDeviceId(Platform, DeviceNum);
 }
 
-std::shared_ptr<device_impl> platform_impl::getOrMakeDeviceImpl(
-    RT::PiDevice PiDevice, const std::shared_ptr<platform_impl> &PlatformImpl) {
+detail::shared_ptr<device_impl> platform_impl::getOrMakeDeviceImpl(
+    RT::PiDevice PiDevice, const detail::shared_ptr<platform_impl> &PlatformImpl) {
   const std::lock_guard<std::mutex> Guard(MDeviceMapMutex);
 
   // If we've already seen this device, return the impl
   for (const std::weak_ptr<device_impl> &DeviceWP : MDeviceCache) {
-    if (std::shared_ptr<device_impl> Device = DeviceWP.lock()) {
+    if (detail::shared_ptr<device_impl> Device = DeviceWP.lock()) {
       if (Device->getHandleRef() == PiDevice)
         return Device;
     }
   }
 
   // Otherwise make the impl
-  std::shared_ptr<device_impl> Result =
+  detail::shared_ptr<device_impl> Result =
       std::make_shared<device_impl>(PiDevice, PlatformImpl);
   MDeviceCache.emplace_back(Result);
 

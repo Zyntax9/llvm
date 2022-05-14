@@ -27,9 +27,9 @@ class queue_impl;
 class event_impl;
 class context_impl;
 
-using QueueImplPtr = std::shared_ptr<detail::queue_impl>;
-using EventImplPtr = std::shared_ptr<detail::event_impl>;
-using ContextImplPtr = std::shared_ptr<detail::context_impl>;
+using QueueImplPtr = detail::shared_ptr<detail::queue_impl>;
+using EventImplPtr = detail::shared_ptr<detail::event_impl>;
+using ContextImplPtr = detail::shared_ptr<detail::context_impl>;
 
 // The class contains methods that work with memory. All operations with
 // device memory should go through MemoryManager.

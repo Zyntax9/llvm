@@ -32,7 +32,7 @@ class kernel;
 
 namespace detail {
 
-using ContextImplPtr = std::shared_ptr<detail::context_impl>;
+using ContextImplPtr = detail::shared_ptr<detail::context_impl>;
 
 class program_impl {
 public:
@@ -75,7 +75,7 @@ public:
   /// \param ProgramList is a list of program_impl instances.
   /// \param LinkOptions is a string containing valid OpenCL link options.
   /// \param PropList is an instance of property_list.
-  program_impl(std::vector<std::shared_ptr<program_impl>> ProgramList,
+  program_impl(std::vector<detail::shared_ptr<program_impl>> ProgramList,
                std::string LinkOptions, const property_list &PropList);
 
   /// Constructs a program instance from an interop raw BE program handle.
@@ -235,7 +235,7 @@ public:
   ///
   /// \return a valid instance of SYCL kernel.
   kernel get_kernel(std::string KernelName,
-                    std::shared_ptr<program_impl> PtrToSelf,
+                    detail::shared_ptr<program_impl> PtrToSelf,
                     bool IsCreatedFromSource) const;
 
   /// Queries this SYCL program for information.

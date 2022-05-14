@@ -22,6 +22,7 @@
 #include <CL/sycl/exception_list.hpp>
 #include <CL/sycl/kernel_bundle.hpp>
 
+
 #include <algorithm>
 #include <memory>
 
@@ -116,7 +117,7 @@ __SYCL_EXPORT event make_event(pi_native_handle NativeHandle,
       std::make_shared<event_impl>(PiEvent, Context));
 }
 
-std::shared_ptr<detail::kernel_bundle_impl>
+detail::shared_ptr<detail::kernel_bundle_impl>
 make_kernel_bundle(pi_native_handle NativeHandle, const context &TargetContext,
                    bool KeepOwnership, bundle_state State, backend Backend) {
   const auto &Plugin = getPlugin(Backend);
@@ -198,7 +199,7 @@ make_kernel_bundle(pi_native_handle NativeHandle, const context &TargetContext,
 }
 
 // TODO: Unused. Remove when allowed.
-std::shared_ptr<detail::kernel_bundle_impl>
+detail::shared_ptr<detail::kernel_bundle_impl>
 make_kernel_bundle(pi_native_handle NativeHandle, const context &TargetContext,
                    bundle_state State, backend Backend) {
   return make_kernel_bundle(NativeHandle, TargetContext, false, State, Backend);

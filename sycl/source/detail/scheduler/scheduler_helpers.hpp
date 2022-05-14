@@ -19,8 +19,8 @@ namespace detail {
 class stream_impl;
 class queue_impl;
 
-using StreamImplPtr = std::shared_ptr<detail::stream_impl>;
-using QueueImplPtr = std::shared_ptr<detail::queue_impl>;
+using StreamImplPtr = detail::shared_ptr<detail::stream_impl>;
+using QueueImplPtr = detail::shared_ptr<detail::queue_impl>;
 
 void initStream(StreamImplPtr Stream, QueueImplPtr Queue);
 

@@ -775,9 +775,9 @@ public:
 
 private:
 #ifdef __SYCL_DEVICE_ONLY__
-  char padding[sizeof(std::shared_ptr<detail::stream_impl>)];
+  char padding[sizeof(detail::shared_ptr<detail::stream_impl>)];
 #else
-  std::shared_ptr<detail::stream_impl> impl;
+  detail::shared_ptr<detail::stream_impl> impl;
   template <class Obj>
   friend decltype(Obj::impl) detail::getSyclObjImpl(const Obj &SyclObject);
 #endif
@@ -1169,7 +1169,7 @@ template <> struct hash<cl::sycl::stream> {
     (void)S;
     return 0;
 #else
-    return hash<std::shared_ptr<cl::sycl::detail::stream_impl>>()(
+    return hash<cl::sycl::detail::shared_ptr<cl::sycl::detail::stream_impl>>()(
         cl::sycl::detail::getSyclObjImpl(S));
 #endif
   }

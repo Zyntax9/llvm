@@ -108,7 +108,7 @@ TEST_F(SchedulerTest, NoHostUnifiedMemory) {
   cl::sycl::detail::QueueImplPtr QImpl = detail::getSyclObjImpl(Q);
 
   device HostDevice;
-  std::shared_ptr<detail::queue_impl> DefaultHostQueue{
+  sycl::detail::shared_ptr<detail::queue_impl> DefaultHostQueue{
       new detail::queue_impl(detail::getSyclObjImpl(HostDevice), {}, {})};
 
   MockScheduler MS;
@@ -219,7 +219,7 @@ TEST_F(SchedulerTest, NoHostUnifiedMemory) {
     cl_mem MockInteropBuffer = reinterpret_cast<cl_mem>(1);
     context InteropContext = Q.get_context();
     InteropPiContext = detail::getSyclObjImpl(InteropContext)->getHandleRef();
-    std::shared_ptr<detail::buffer_impl> BufI = std::make_shared<
+    sycl::detail::shared_ptr<detail::buffer_impl> BufI = std::make_shared<
         detail::buffer_impl>(
         detail::pi::cast<pi_native_handle>(MockInteropBuffer), Q.get_context(),
         make_unique_ptr<detail::SYCLMemObjAllocatorHolder<buffer_allocator>>(),

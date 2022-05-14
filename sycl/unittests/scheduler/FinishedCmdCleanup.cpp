@@ -79,7 +79,7 @@ TEST_F(SchedulerTest, FinishedCmdCleanup) {
   addEdge(InnerA, &LeafA, &AllocaA);
   addEdge(InnerA, InnerB, &AllocaB);
 
-  std::shared_ptr<detail::event_impl> Event{new detail::event_impl{}};
+  sycl::detail::shared_ptr<detail::event_impl> Event{new detail::event_impl{}};
   Event->setCommand(InnerA);
   MS.cleanupFinishedCommands(Event);
   MS.removeRecordForMemObj(detail::getSyclObjImpl(BufC).get());

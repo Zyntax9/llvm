@@ -225,11 +225,11 @@ public:
 
 private:
   /// Constructs a SYCL context object from a valid context_impl instance.
-  context(std::shared_ptr<detail::context_impl> Impl);
+  context(detail::shared_ptr<detail::context_impl> Impl);
 
   pi_native_handle getNative() const;
 
-  std::shared_ptr<detail::context_impl> impl;
+  detail::shared_ptr<detail::context_impl> impl;
   template <class Obj>
   friend decltype(Obj::impl) detail::getSyclObjImpl(const Obj &SyclObject);
 
@@ -248,7 +248,7 @@ private:
 namespace std {
 template <> struct hash<cl::sycl::context> {
   size_t operator()(const cl::sycl::context &Context) const {
-    return hash<std::shared_ptr<cl::sycl::detail::context_impl>>()(
+    return hash<cl::sycl::detail::shared_ptr<cl::sycl::detail::context_impl>>()(
         cl::sycl::detail::getSyclObjImpl(Context));
   }
 };

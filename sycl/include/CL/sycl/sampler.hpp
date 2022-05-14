@@ -107,14 +107,14 @@ private:
 #ifdef __SYCL_DEVICE_ONLY__
   detail::sampler_impl impl;
   void __init(__ocl_sampler_t Sampler) { impl.m_Sampler = Sampler; }
-  char padding[sizeof(std::shared_ptr<detail::sampler_impl>) - sizeof(impl)];
+  char padding[sizeof(detail::shared_ptr<detail::sampler_impl>) - sizeof(impl)];
 
 public:
   sampler() = default;
 
 private:
 #else
-  std::shared_ptr<detail::sampler_impl> impl;
+  detail::shared_ptr<detail::sampler_impl> impl;
   template <class Obj>
   friend decltype(Obj::impl) detail::getSyclObjImpl(const Obj &SyclObject);
 #endif
@@ -132,7 +132,7 @@ template <> struct hash<cl::sycl::sampler> {
     (void)s;
     return 0;
 #else
-    return hash<std::shared_ptr<cl::sycl::detail::sampler_impl>>()(
+    return hash<cl::sycl::detail::shared_ptr<cl::sycl::detail::sampler_impl>>()(
         cl::sycl::detail::getSyclObjImpl(s));
 #endif
   }

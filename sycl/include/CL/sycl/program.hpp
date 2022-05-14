@@ -21,6 +21,7 @@
 #include <CL/sycl/stl.hpp>
 #include <sycl/ext/oneapi/experimental/spec_constant.hpp>
 
+
 __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl {
 
@@ -375,7 +376,7 @@ public:
 
 private:
   pi_native_handle getNative() const;
-  program(std::shared_ptr<detail::program_impl> impl);
+  program(detail::shared_ptr<detail::program_impl> impl);
 
   /// Template-free version of get_kernel.
   ///
@@ -412,7 +413,7 @@ private:
 
   void set_spec_constant_impl(const char *Name, void *Data, size_t Size);
 
-  std::shared_ptr<detail::program_impl> impl;
+  detail::shared_ptr<detail::program_impl> impl;
 
   template <class Obj>
   friend decltype(Obj::impl) detail::getSyclObjImpl(const Obj &SyclObject);
@@ -425,7 +426,7 @@ private:
 namespace std {
 template <> struct hash<cl::sycl::program> {
   size_t operator()(const cl::sycl::program &prg) const {
-    return hash<std::shared_ptr<cl::sycl::detail::program_impl>>()(
+    return hash<cl::sycl::detail::shared_ptr<cl::sycl::detail::program_impl>>()(
         cl::sycl::detail::getSyclObjImpl(prg));
   }
 };

@@ -11,6 +11,7 @@
 #include <CL/sycl/backend.hpp>
 #include <CL/sycl/program.hpp>
 
+
 #include <vector>
 
 __SYCL_INLINE_NAMESPACE(cl) {
@@ -161,7 +162,7 @@ make_kernel_bundle<backend::ext_oneapi_level_zero, bundle_state::executable>(
                           kernel_bundle<bundle_state::executable>>
         &BackendObject,
     const context &TargetContext) {
-  std::shared_ptr<detail::kernel_bundle_impl> KBImpl =
+  detail::shared_ptr<detail::kernel_bundle_impl> KBImpl =
       detail::make_kernel_bundle(
           detail::pi::cast<pi_native_handle>(BackendObject.NativeHandle),
           TargetContext,

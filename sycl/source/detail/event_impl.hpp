@@ -15,6 +15,7 @@
 #include <CL/sycl/stl.hpp>
 #include <detail/plugin.hpp>
 
+
 #include <atomic>
 #include <cassert>
 
@@ -24,11 +25,11 @@ class context;
 namespace detail {
 class plugin;
 class context_impl;
-using ContextImplPtr = std::shared_ptr<cl::sycl::detail::context_impl>;
+using ContextImplPtr = detail::shared_ptr<cl::sycl::detail::context_impl>;
 class queue_impl;
-using QueueImplPtr = std::shared_ptr<cl::sycl::detail::queue_impl>;
+using QueueImplPtr = detail::shared_ptr<cl::sycl::detail::queue_impl>;
 class event_impl;
-using EventImplPtr = std::shared_ptr<cl::sycl::detail::event_impl>;
+using EventImplPtr = detail::shared_ptr<cl::sycl::detail::event_impl>;
 
 class event_impl {
 public:
@@ -70,7 +71,7 @@ public:
   /// Self is needed in order to pass shared_ptr to Scheduler.
   ///
   /// \param Self is a pointer to this event.
-  void wait(std::shared_ptr<cl::sycl::detail::event_impl> Self) const;
+  void wait(detail::shared_ptr<cl::sycl::detail::event_impl> Self) const;
 
   /// Waits for the event.
   ///
@@ -80,13 +81,13 @@ public:
   /// pass shared_ptr to Scheduler.
   ///
   /// \param Self is a pointer to this event.
-  void wait_and_throw(std::shared_ptr<cl::sycl::detail::event_impl> Self);
+  void wait_and_throw(detail::shared_ptr<cl::sycl::detail::event_impl> Self);
 
   /// Clean up the command associated with the event. Assumes that the task this
   /// event is associated with has been completed.
   ///
   /// \param Self is a pointer to this event.
-  void cleanupCommand(std::shared_ptr<cl::sycl::detail::event_impl> Self) const;
+  void cleanupCommand(detail::shared_ptr<cl::sycl::detail::event_impl> Self) const;
 
   /// Queries this event for profiling information.
   ///
@@ -172,14 +173,14 @@ public:
   /// Returns vector of event dependencies.
   ///
   /// @return a reference to MPreparedDepsEvents.
-  std::vector<std::shared_ptr<event_impl>> &getPreparedDepsEvents() {
+  std::vector<detail::shared_ptr<event_impl>> &getPreparedDepsEvents() {
     return MPreparedDepsEvents;
   }
 
   /// Returns vector of host event dependencies.
   ///
   /// @return a reference to MPreparedHostDepsEvents.
-  std::vector<std::shared_ptr<event_impl>> &getPreparedHostDepsEvents() {
+  std::vector<detail::shared_ptr<event_impl>> &getPreparedHostDepsEvents() {
     return MPreparedHostDepsEvents;
   }
 

@@ -17,6 +17,8 @@
 #include <CL/sycl/detail/export.hpp>
 #include <CL/sycl/detail/os_util.hpp>
 #include <CL/sycl/detail/pi.h>
+#include <CL/sycl/detail/tracked_memory.hpp>
+
 
 #include <cassert>
 #include <cstdint>
@@ -151,7 +153,7 @@ template <class To, class From> To cast(From value);
 // Holds the PluginInformation for the plugin that is bound.
 // Currently a global variable is used to store OpenCL plugin information to be
 // used with SYCL Interoperability Constructors.
-extern std::shared_ptr<plugin> GlobalPlugin;
+extern detail::shared_ptr<plugin> GlobalPlugin;
 
 // Performs PI one-time initialization.
 std::vector<plugin> &initialize();

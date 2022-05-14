@@ -15,6 +15,7 @@
 #include <CL/sycl/detail/export.hpp>
 #include <CL/sycl/stl.hpp>
 
+
 // 4.6.2 Platform class
 #include <utility>
 __SYCL_INLINE_NAMESPACE(cl) {
@@ -144,8 +145,8 @@ public:
 private:
   pi_native_handle getNative() const;
 
-  std::shared_ptr<detail::platform_impl> impl;
-  platform(std::shared_ptr<detail::platform_impl> impl) : impl(impl) {}
+  detail::shared_ptr<detail::platform_impl> impl;
+  platform(detail::shared_ptr<detail::platform_impl> impl) : impl(impl) {}
 
   template <class T>
   friend T detail::createSyclObjFromImpl(decltype(T::impl) ImplObj);
@@ -159,7 +160,8 @@ private:
 namespace std {
 template <> struct hash<cl::sycl::platform> {
   size_t operator()(const cl::sycl::platform &p) const {
-    return hash<std::shared_ptr<cl::sycl::detail::platform_impl>>()(
+    return hash<
+        cl::sycl::detail::shared_ptr<cl::sycl::detail::platform_impl>>()(
         cl::sycl::detail::getSyclObjImpl(p));
   }
 };

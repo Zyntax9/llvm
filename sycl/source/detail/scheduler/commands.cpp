@@ -1413,7 +1413,7 @@ std::vector<StreamImplPtr> ExecCGCommand::getStreams() const {
   return {};
 }
 
-std::vector<std::shared_ptr<const void>>
+std::vector<detail::shared_ptr<const void>>
 ExecCGCommand::getAuxiliaryResources() const {
   if (MCommandGroup->getType() == CG::Kernel)
     return ((CGExecKernel *)MCommandGroup.get())->getAuxiliaryResources();
@@ -1827,8 +1827,8 @@ void ExecCGCommand::emitInstrumentationData() {
       RT::PiKernel Kernel = nullptr;
       std::mutex *KernelMutex = nullptr;
 
-      std::shared_ptr<kernel_impl> SyclKernelImpl;
-      std::shared_ptr<device_image_impl> DeviceImageImpl;
+      detail::shared_ptr<kernel_impl> SyclKernelImpl;
+      detail::shared_ptr<device_image_impl> DeviceImageImpl;
       auto KernelBundleImplPtr = KernelCG->getKernelBundle();
 
       // Use kernel_bundle if available unless it is interop.
@@ -1972,7 +1972,7 @@ static void ReverseRangeDimensionsForKernel(NDRDescT &NDR) {
 
 static pi_result SetKernelParamsAndLaunch(
     const QueueImplPtr &Queue, std::vector<ArgDesc> &Args,
-    const std::shared_ptr<device_image_impl> &DeviceImageImpl,
+    const detail::shared_ptr<device_image_impl> &DeviceImageImpl,
     RT::PiKernel Kernel, NDRDescT &NDRDesc, std::vector<RT::PiEvent> &RawEvents,
     RT::PiEvent *OutEvent,
     const ProgramManager::KernelArgMask &EliminatedArgMask,
@@ -2102,8 +2102,8 @@ void DispatchNativeKernel(void *Blob) {
 
 cl_int enqueueImpKernel(
     const QueueImplPtr &Queue, NDRDescT &NDRDesc, std::vector<ArgDesc> &Args,
-    const std::shared_ptr<detail::kernel_bundle_impl> &KernelBundleImplPtr,
-    const std::shared_ptr<detail::kernel_impl> &MSyclKernel,
+    const detail::shared_ptr<detail::kernel_bundle_impl> &KernelBundleImplPtr,
+    const detail::shared_ptr<detail::kernel_impl> &MSyclKernel,
     const std::string &KernelName, const detail::OSModuleHandle &OSModuleHandle,
     std::vector<RT::PiEvent> &RawEvents, RT::PiEvent *OutEvent,
     const std::function<void *(Requirement *Req)> &getMemAllocationFunc) {
@@ -2115,8 +2115,8 @@ cl_int enqueueImpKernel(
   std::mutex *KernelMutex = nullptr;
   RT::PiProgram Program = nullptr;
 
-  std::shared_ptr<kernel_impl> SyclKernelImpl;
-  std::shared_ptr<device_image_impl> DeviceImageImpl;
+  detail::shared_ptr<kernel_impl> SyclKernelImpl;
+  detail::shared_ptr<device_image_impl> DeviceImageImpl;
 
   // Use kernel_bundle if available unless it is interop.
   // Interop bundles can't be used in the first branch, because the kernels
@@ -2396,7 +2396,7 @@ cl_int ExecCGCommand::enqueueImp() {
       return AllocaCmd->getMemAllocation();
     };
 
-    const std::shared_ptr<detail::kernel_impl> &SyclKernel =
+    const detail::shared_ptr<detail::kernel_impl> &SyclKernel =
         ExecKernel->MSyclKernel;
     const std::string &KernelName = ExecKernel->MKernelName;
     const detail::OSModuleHandle &OSModuleHandle = ExecKernel->MOSModuleHandle;

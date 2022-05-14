@@ -14,7 +14,7 @@ __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl {
 namespace detail {
 
-using KernelBundleImplPtr = std::shared_ptr<detail::kernel_bundle_impl>;
+using KernelBundleImplPtr = detail::shared_ptr<detail::kernel_bundle_impl>;
 
 enum class HandlerSubmissionState : std::uint8_t {
   NO_STATE = 0,
@@ -24,8 +24,8 @@ enum class HandlerSubmissionState : std::uint8_t {
 
 class handler_impl {
 public:
-  handler_impl(std::shared_ptr<queue_impl> SubmissionPrimaryQueue,
-               std::shared_ptr<queue_impl> SubmissionSecondaryQueue)
+  handler_impl(detail::shared_ptr<queue_impl> SubmissionPrimaryQueue,
+               detail::shared_ptr<queue_impl> SubmissionSecondaryQueue)
       : MSubmissionPrimaryQueue(std::move(SubmissionPrimaryQueue)),
         MSubmissionSecondaryQueue(std::move(SubmissionSecondaryQueue)){};
 
@@ -58,16 +58,16 @@ public:
   /// Shared pointer to the primary queue implementation. This is different from
   /// the queue associated with the handler if the corresponding submission is
   /// a fallback from a previous submission.
-  std::shared_ptr<queue_impl> MSubmissionPrimaryQueue;
+  detail::shared_ptr<queue_impl> MSubmissionPrimaryQueue;
 
   /// Shared pointer to the secondary queue implementation. Nullptr if no
   /// secondary queue fallback was given in the associated submission. This is
   /// equal to the queue associated with the handler if the corresponding
   /// submission is a fallback from a previous submission.
-  std::shared_ptr<queue_impl> MSubmissionSecondaryQueue;
+  detail::shared_ptr<queue_impl> MSubmissionSecondaryQueue;
 
   // Stores auxiliary resources used by internal operations.
-  std::vector<std::shared_ptr<const void>> MAuxiliaryResources;
+  std::vector<detail::shared_ptr<const void>> MAuxiliaryResources;
 };
 
 } // namespace detail

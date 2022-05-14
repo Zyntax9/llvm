@@ -26,7 +26,7 @@ protected:
       : MDataLessProps(DataLessProps) {}
   PropertyListBase(
       std::bitset<DataLessPropKind::DataLessPropKindSize> DataLessProps,
-      std::vector<std::shared_ptr<PropertyWithDataBase>> PropsWithData)
+      std::vector<detail::shared_ptr<PropertyWithDataBase>> PropsWithData)
       : MDataLessProps(DataLessProps),
         MPropsWithData(std::move(PropsWithData)) {}
   void ctorHelper() {}
@@ -72,7 +72,7 @@ protected:
       std::is_base_of<PropertyWithDataBase, PropT>::value, bool>
   has_property_helper() const {
     const int PropKind = static_cast<int>(PropT::getKind());
-    for (const std::shared_ptr<PropertyWithDataBase> &Prop : MPropsWithData)
+    for (const detail::shared_ptr<PropertyWithDataBase> &Prop : MPropsWithData)
       if (Prop->isSame(PropKind))
         return true;
     return false;
@@ -95,7 +95,7 @@ protected:
       throw sycl::invalid_object_error("The property is not found",
                                        PI_INVALID_VALUE);
 
-    for (const std::shared_ptr<PropertyWithDataBase> &Prop : MPropsWithData)
+    for (const detail::shared_ptr<PropertyWithDataBase> &Prop : MPropsWithData)
       if (Prop->isSame(PropKind))
         return *static_cast<PropT *>(Prop.get());
 
@@ -104,7 +104,7 @@ protected:
   }
 
   void add_or_replace_accessor_properties_helper(
-      const std::vector<std::shared_ptr<PropertyWithDataBase>> &PropsWithData) {
+      const std::vector<detail::shared_ptr<PropertyWithDataBase>> &PropsWithData) {
     for (auto &Prop : PropsWithData) {
       if (Prop->isSame(sycl::detail::PropWithDataKind::AccPropBufferLocation)) {
         delete_accessor_property_helper(
@@ -130,7 +130,7 @@ protected:
   // Stores enabled/disabled for simple properties
   std::bitset<DataLessPropKind::DataLessPropKindSize> MDataLessProps;
   // Stores shared_ptrs to complex properties
-  std::vector<std::shared_ptr<PropertyWithDataBase>> MPropsWithData;
+  std::vector<detail::shared_ptr<PropertyWithDataBase>> MPropsWithData;
 };
 } // namespace detail
 } // namespace sycl

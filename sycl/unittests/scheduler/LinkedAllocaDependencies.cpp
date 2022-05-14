@@ -13,7 +13,8 @@ using namespace cl::sycl;
 
 class MemObjMock : public cl::sycl::detail::SYCLMemObjI {
 public:
-  using ContextImplPtr = std::shared_ptr<cl::sycl::detail::context_impl>;
+  using ContextImplPtr =
+      sycl::detail::shared_ptr<cl::sycl::detail::context_impl>;
 
   MemObjMock(const std::shared_ptr<cl::sycl::detail::MemObjRecord> &Record)
       : SYCLMemObjI() {
@@ -63,9 +64,10 @@ TEST_F(SchedulerTest, LinkedAllocaDependencies) {
   cl::sycl::detail::QueueImplPtr Q1 = cl::sycl::detail::getSyclObjImpl(Queue1);
 
   sycl::device HostDevice;
-  std::shared_ptr<detail::queue_impl> DefaultHostQueue(new detail::queue_impl(
-      detail::getSyclObjImpl(HostDevice), /*AsyncHandler=*/{},
-      /*PropList=*/{}));
+  sycl::detail::shared_ptr<detail::queue_impl> DefaultHostQueue(
+      new detail::queue_impl(detail::getSyclObjImpl(HostDevice),
+                             /*AsyncHandler=*/{},
+                             /*PropList=*/{}));
 
   auto AllocaDep = [](cl::sycl::detail::Command *, cl::sycl::detail::Command *,
                       cl::sycl::detail::MemObjRecord *,

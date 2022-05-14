@@ -11,8 +11,10 @@
 #include <CL/sycl/detail/backend_traits.hpp>
 #include <CL/sycl/detail/common.hpp>
 #include <CL/sycl/detail/export.hpp>
+
 #include <CL/sycl/info/info_desc.hpp>
 #include <CL/sycl/stl.hpp>
+
 
 #include <memory>
 
@@ -137,13 +139,13 @@ public:
   }
 
 private:
-  event(std::shared_ptr<detail::event_impl> EventImpl);
+  event(detail::shared_ptr<detail::event_impl> EventImpl);
 
   pi_native_handle getNative() const;
 
   std::vector<pi_native_handle> getNativeVector() const;
 
-  std::shared_ptr<detail::event_impl> impl;
+  detail::shared_ptr<detail::event_impl> impl;
 
   template <class Obj>
   friend decltype(Obj::impl) detail::getSyclObjImpl(const Obj &SyclObject);
@@ -162,7 +164,7 @@ private:
 namespace std {
 template <> struct hash<cl::sycl::event> {
   size_t operator()(const cl::sycl::event &e) const {
-    return hash<std::shared_ptr<cl::sycl::detail::event_impl>>()(
+    return hash<cl::sycl::detail::shared_ptr<cl::sycl::detail::event_impl>>()(
         cl::sycl::detail::getSyclObjImpl(e));
   }
 };

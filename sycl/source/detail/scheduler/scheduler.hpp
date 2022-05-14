@@ -180,9 +180,9 @@ class event_impl;
 class context_impl;
 class DispatchHostTask;
 
-using QueueImplPtr = std::shared_ptr<detail::queue_impl>;
-using EventImplPtr = std::shared_ptr<detail::event_impl>;
-using ContextImplPtr = std::shared_ptr<detail::context_impl>;
+using QueueImplPtr = detail::shared_ptr<detail::queue_impl>;
+using EventImplPtr = detail::shared_ptr<detail::event_impl>;
+using ContextImplPtr = detail::shared_ptr<detail::context_impl>;
 
 /// Memory Object Record
 ///
@@ -514,8 +514,8 @@ protected:
     /// (assuming that all its commands have been waited for).
     void cleanupFinishedCommands(
         Command *FinishedCmd,
-        std::vector<std::shared_ptr<cl::sycl::detail::stream_impl>> &,
-        std::vector<std::shared_ptr<const void>> &);
+        std::vector<detail::shared_ptr<cl::sycl::detail::stream_impl>> &,
+        std::vector<detail::shared_ptr<const void>> &);
 
     /// Reschedules the command passed using Queue provided.
     ///
@@ -541,8 +541,8 @@ protected:
     /// Removes commands that use the given MemObjRecord from the graph.
     void cleanupCommandsForRecord(
         MemObjRecord *Record,
-        std::vector<std::shared_ptr<cl::sycl::detail::stream_impl>> &,
-        std::vector<std::shared_ptr<const void>> &);
+        std::vector<detail::shared_ptr<cl::sycl::detail::stream_impl>> &,
+        std::vector<detail::shared_ptr<const void>> &);
 
     /// Removes the MemObjRecord for the memory object passed.
     void removeRecordForMemObj(SYCLMemObjI *MemObject);

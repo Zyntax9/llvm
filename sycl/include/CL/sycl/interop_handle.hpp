@@ -16,6 +16,7 @@
 #include <CL/sycl/detail/defines.hpp>
 #include <CL/sycl/detail/pi.hpp>
 
+
 #include <memory>
 
 __SYCL_INLINE_NAMESPACE(cl) {
@@ -149,9 +150,9 @@ private:
   using ReqToMem = std::pair<detail::Requirement *, pi_mem>;
 
   interop_handle(std::vector<ReqToMem> MemObjs,
-                 const std::shared_ptr<detail::queue_impl> &Queue,
-                 const std::shared_ptr<detail::device_impl> &Device,
-                 const std::shared_ptr<detail::context_impl> &Context)
+                 const detail::shared_ptr<detail::queue_impl> &Queue,
+                 const detail::shared_ptr<detail::device_impl> &Device,
+                 const detail::shared_ptr<detail::context_impl> &Context)
       : MQueue(Queue), MDevice(Device), MContext(Context),
         MMemObjs(std::move(MemObjs)) {}
 
@@ -168,9 +169,9 @@ private:
   __SYCL_EXPORT pi_native_handle getNativeDevice() const;
   __SYCL_EXPORT pi_native_handle getNativeContext() const;
 
-  std::shared_ptr<detail::queue_impl> MQueue;
-  std::shared_ptr<detail::device_impl> MDevice;
-  std::shared_ptr<detail::context_impl> MContext;
+  detail::shared_ptr<detail::queue_impl> MQueue;
+  detail::shared_ptr<detail::device_impl> MDevice;
+  detail::shared_ptr<detail::context_impl> MContext;
 
   std::vector<ReqToMem> MMemObjs;
 };

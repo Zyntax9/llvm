@@ -36,7 +36,7 @@ public:
   device select_device() const override;
 
 private:
-  std::shared_ptr<detail::filter_selector_impl> impl;
+  sycl::detail::shared_ptr<detail::filter_selector_impl> impl;
 };
 } // namespace oneapi
 } // namespace ext

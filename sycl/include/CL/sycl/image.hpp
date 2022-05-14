@@ -177,7 +177,7 @@ public:
         PropList);
   }
 
-  image(std::shared_ptr<void> &HostPointer, image_channel_order Order,
+  image(detail::shared_ptr<void> &HostPointer, image_channel_order Order,
         image_channel_type Type, const range<Dimensions> &Range,
         const property_list &PropList = {}) {
     impl = std::make_shared<detail::image_impl<Dimensions>>(
@@ -186,7 +186,7 @@ public:
         PropList);
   }
 
-  image(std::shared_ptr<void> &HostPointer, image_channel_order Order,
+  image(detail::shared_ptr<void> &HostPointer, image_channel_order Order,
         image_channel_type Type, const range<Dimensions> &Range,
         AllocatorT Allocator, const property_list &PropList = {}) {
     impl = std::make_shared<detail::image_impl<Dimensions>>(
@@ -198,7 +198,7 @@ public:
 
   /* Available only when: dimensions >1 */
   template <bool B = (Dimensions > 1)>
-  image(std::shared_ptr<void> &HostPointer, image_channel_order Order,
+  image(detail::shared_ptr<void> &HostPointer, image_channel_order Order,
         image_channel_type Type, const range<Dimensions> &Range,
         const typename detail::enable_if_t<B, range<Dimensions - 1>> &Pitch,
         const property_list &PropList = {}) {
@@ -210,7 +210,7 @@ public:
 
   /* Available only when: dimensions >1 */
   template <bool B = (Dimensions > 1)>
-  image(std::shared_ptr<void> &HostPointer, image_channel_order Order,
+  image(detail::shared_ptr<void> &HostPointer, image_channel_order Order,
         image_channel_type Type, const range<Dimensions> &Range,
         const typename detail::enable_if_t<B, range<Dimensions - 1>> &Pitch,
         AllocatorT Allocator, const property_list &PropList = {}) {
@@ -305,7 +305,7 @@ public:
   void set_write_back(bool flag = true) { impl->set_write_back(flag); }
 
 private:
-  std::shared_ptr<detail::image_impl<Dimensions>> impl;
+  detail::shared_ptr<detail::image_impl<Dimensions>> impl;
 
   template <class Obj>
   friend decltype(Obj::impl) detail::getSyclObjImpl(const Obj &SyclObject);
@@ -318,7 +318,8 @@ namespace std {
 template <int Dimensions, typename AllocatorT>
 struct hash<cl::sycl::image<Dimensions, AllocatorT>> {
   size_t operator()(const cl::sycl::image<Dimensions, AllocatorT> &I) const {
-    return hash<std::shared_ptr<cl::sycl::detail::image_impl<Dimensions>>>()(
+    return hash<cl::sycl::detail::shared_ptr<
+        cl::sycl::detail::image_impl<Dimensions>>>()(
         cl::sycl::detail::getSyclObjImpl(I));
   }
 };

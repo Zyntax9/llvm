@@ -1045,8 +1045,8 @@ void Scheduler::GraphBuilder::decrementLeafCountersForRecord(
 
 void Scheduler::GraphBuilder::cleanupCommandsForRecord(
     MemObjRecord *Record,
-    std::vector<std::shared_ptr<stream_impl>> &StreamsToDeallocate,
-    std::vector<std::shared_ptr<const void>> &AuxResourcesToDeallocate) {
+    std::vector<detail::shared_ptr<stream_impl>> &StreamsToDeallocate,
+    std::vector<detail::shared_ptr<const void>> &AuxResourcesToDeallocate) {
   std::vector<AllocaCommandBase *> &AllocaCommands = Record->MAllocaCommands;
   if (AllocaCommands.empty())
     return;
@@ -1100,13 +1100,13 @@ void Scheduler::GraphBuilder::cleanupCommandsForRecord(
       auto ExecCmd = static_cast<ExecCGCommand *>(Cmd);
 
       // Transfer ownership of stream implementations.
-      std::vector<std::shared_ptr<stream_impl>> Streams = ExecCmd->getStreams();
+      std::vector<detail::shared_ptr<stream_impl>> Streams = ExecCmd->getStreams();
       ExecCmd->clearStreams();
       StreamsToDeallocate.insert(StreamsToDeallocate.end(), Streams.begin(),
                                  Streams.end());
 
       // Transfer ownership of auxiliary resources.
-      std::vector<std::shared_ptr<const void>> AuxResources =
+      std::vector<detail::shared_ptr<const void>> AuxResources =
           ExecCmd->getAuxiliaryResources();
       ExecCmd->clearAuxiliaryResources();
       AuxResourcesToDeallocate.insert(AuxResourcesToDeallocate.end(),
@@ -1202,8 +1202,8 @@ void Scheduler::GraphBuilder::cleanupCommand(Command *Cmd) {
 
 void Scheduler::GraphBuilder::cleanupFinishedCommands(
     Command *FinishedCmd,
-    std::vector<std::shared_ptr<stream_impl>> &StreamsToDeallocate,
-    std::vector<std::shared_ptr<const void>> &AuxResourcesToDeallocate) {
+    std::vector<detail::shared_ptr<stream_impl>> &StreamsToDeallocate,
+    std::vector<detail::shared_ptr<const void>> &AuxResourcesToDeallocate) {
   assert(MCmdsToVisit.empty());
   MCmdsToVisit.push(FinishedCmd);
   MVisitedCmds.clear();
@@ -1221,13 +1221,13 @@ void Scheduler::GraphBuilder::cleanupFinishedCommands(
       auto ExecCmd = static_cast<ExecCGCommand *>(Cmd);
 
       // Transfer ownership of stream implementations.
-      std::vector<std::shared_ptr<stream_impl>> Streams = ExecCmd->getStreams();
+      std::vector<detail::shared_ptr<stream_impl>> Streams = ExecCmd->getStreams();
       ExecCmd->clearStreams();
       StreamsToDeallocate.insert(StreamsToDeallocate.end(), Streams.begin(),
                                  Streams.end());
 
       // Transfer ownership of auxiliary resources.
-      std::vector<std::shared_ptr<const void>> AuxResources =
+      std::vector<detail::shared_ptr<const void>> AuxResources =
           ExecCmd->getAuxiliaryResources();
       ExecCmd->clearAuxiliaryResources();
       AuxResourcesToDeallocate.insert(AuxResourcesToDeallocate.end(),

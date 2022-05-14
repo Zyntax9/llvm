@@ -8,6 +8,7 @@
 
 #include <CL/sycl/context.hpp>
 #include <CL/sycl/detail/common.hpp>
+
 #include <CL/sycl/device.hpp>
 #include <CL/sycl/device_selector.hpp>
 #include <CL/sycl/exception.hpp>
@@ -128,7 +129,7 @@ std::vector<device> context::get_devices() const {
   return impl->get_info<info::context::devices>();
 }
 
-context::context(std::shared_ptr<detail::context_impl> Impl) : impl(Impl) {}
+context::context(detail::shared_ptr<detail::context_impl> Impl) : impl(Impl) {}
 
 pi_native_handle context::getNative() const { return impl->getNative(); }
 

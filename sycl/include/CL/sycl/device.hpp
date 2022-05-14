@@ -16,6 +16,7 @@
 #include <CL/sycl/platform.hpp>
 #include <CL/sycl/stl.hpp>
 
+
 #include <memory>
 #include <utility>
 
@@ -205,8 +206,8 @@ public:
   bool has(aspect Aspect) const;
 
 private:
-  std::shared_ptr<detail::device_impl> impl;
-  device(std::shared_ptr<detail::device_impl> impl) : impl(impl) {}
+  detail::shared_ptr<detail::device_impl> impl;
+  device(detail::shared_ptr<detail::device_impl> impl) : impl(impl) {}
 
   pi_native_handle getNative() const;
 
@@ -230,7 +231,7 @@ private:
 namespace std {
 template <> struct hash<cl::sycl::device> {
   size_t operator()(const cl::sycl::device &Device) const {
-    return hash<std::shared_ptr<cl::sycl::detail::device_impl>>()(
+    return hash<cl::sycl::detail::shared_ptr<cl::sycl::detail::device_impl>>()(
         cl::sycl::detail::getSyclObjImpl(Device));
   }
 };

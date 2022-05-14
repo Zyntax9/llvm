@@ -16,6 +16,7 @@
 #include <detail/event_impl.hpp>
 #include <detail/scheduler/scheduler.hpp>
 
+
 #include <memory>
 #include <unordered_set>
 
@@ -61,7 +62,7 @@ std::vector<event> event::get_wait_list() {
   return Result;
 }
 
-event::event(std::shared_ptr<detail::event_impl> event_impl)
+event::event(detail::shared_ptr<detail::event_impl> event_impl)
     : impl(event_impl) {}
 
 #define __SYCL_PARAM_TRAITS_SPEC(param_type, param, ret_type)                  \

@@ -20,8 +20,8 @@ class event_impl;
 class context_impl;
 struct MemObjRecord;
 
-using EventImplPtr = std::shared_ptr<detail::event_impl>;
-using ContextImplPtr = std::shared_ptr<detail::context_impl>;
+using EventImplPtr = detail::shared_ptr<detail::event_impl>;
+using ContextImplPtr = detail::shared_ptr<detail::context_impl>;
 
 // The class serves as an interface in the scheduler for all SYCL memory
 // objects.
@@ -71,7 +71,7 @@ protected:
   // fixme replace with std::unique_ptr once it is implemented. Standard
   // unique_ptr requires knowlege of sizeof(MemObjRecord) at compile time
   // which is unavailable.
-  std::shared_ptr<MemObjRecord> MRecord;
+  detail::shared_ptr<MemObjRecord> MRecord;
   friend class Scheduler;
   friend class ExecCGCommand;
 };

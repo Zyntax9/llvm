@@ -13,6 +13,7 @@
 #include <CL/sycl/detail/defines_elementary.hpp>
 #include <CL/sycl/detail/export.hpp>
 #include <CL/sycl/detail/stl_type_traits.hpp>
+#include <CL/sycl/detail/tracked_memory.hpp>
 
 #include <cstdint>
 #include <string>

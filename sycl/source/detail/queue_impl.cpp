@@ -9,9 +9,11 @@
 #include <CL/sycl/context.hpp>
 #include <CL/sycl/detail/memory_manager.hpp>
 #include <CL/sycl/detail/pi.hpp>
+
 #include <CL/sycl/device.hpp>
 #include <detail/event_impl.hpp>
 #include <detail/queue_impl.hpp>
+
 
 #include <cstring>
 #include <utility>
@@ -43,7 +45,7 @@ template <> device queue_impl::get_info<info::queue::device>() const {
 }
 
 static event
-prepareUSMEvent(const std::shared_ptr<detail::queue_impl> &QueueImpl,
+prepareUSMEvent(const detail::shared_ptr<detail::queue_impl> &QueueImpl,
                 RT::PiEvent NativeEvent) {
   auto EventImpl = std::make_shared<detail::event_impl>(QueueImpl);
   EventImpl->getHandleRef() = NativeEvent;
@@ -57,7 +59,7 @@ static event createDiscardedEvent() {
   return createSyclObjFromImpl<event>(EventImpl);
 }
 
-event queue_impl::memset(const std::shared_ptr<detail::queue_impl> &Self,
+event queue_impl::memset(const detail::shared_ptr<detail::queue_impl> &Self,
                          void *Ptr, int Value, size_t Count,
                          const std::vector<event> &DepEvents) {
   if (MHasDiscardEventsSupport) {
@@ -79,7 +81,7 @@ event queue_impl::memset(const std::shared_ptr<detail::queue_impl> &Self,
   return MDiscardEvents ? createDiscardedEvent() : ResEvent;
 }
 
-event queue_impl::memcpy(const std::shared_ptr<detail::queue_impl> &Self,
+event queue_impl::memcpy(const detail::shared_ptr<detail::queue_impl> &Self,
                          void *Dest, const void *Src, size_t Count,
                          const std::vector<event> &DepEvents) {
   if (MHasDiscardEventsSupport) {
@@ -101,7 +103,7 @@ event queue_impl::memcpy(const std::shared_ptr<detail::queue_impl> &Self,
   return MDiscardEvents ? createDiscardedEvent() : ResEvent;
 }
 
-event queue_impl::mem_advise(const std::shared_ptr<detail::queue_impl> &Self,
+event queue_impl::mem_advise(const detail::shared_ptr<detail::queue_impl> &Self,
                              const void *Ptr, size_t Length,
                              pi_mem_advice Advice,
                              const std::vector<event> &DepEvents) {
@@ -291,7 +293,7 @@ void queue_impl::wait(const detail::code_location &CodeLoc) {
   const bool SupportsPiFinish = !is_host() && MSupportOOO;
   for (auto EventImplWeakPtrIt = WeakEvents.rbegin();
        EventImplWeakPtrIt != WeakEvents.rend(); ++EventImplWeakPtrIt) {
-    if (std::shared_ptr<event_impl> EventImplSharedPtr =
+    if (detail::shared_ptr<event_impl> EventImplSharedPtr =
             EventImplWeakPtrIt->lock()) {
       // A nullptr PI event indicates that piQueueFinish will not cover it,
       // either because it's a host task event or an unenqueued one.
@@ -304,7 +306,7 @@ void queue_impl::wait(const detail::code_location &CodeLoc) {
     const detail::plugin &Plugin = getPlugin();
     Plugin.call<detail::PiApiKind::piQueueFinish>(getHandleRef());
     for (std::weak_ptr<event_impl> &EventImplWeakPtr : WeakEvents)
-      if (std::shared_ptr<event_impl> EventImplSharedPtr =
+      if (detail::shared_ptr<event_impl> EventImplSharedPtr =
               EventImplWeakPtr.lock())
         if (EventImplSharedPtr->needsCleanupAfterWait())
           EventImplSharedPtr->cleanupCommand(EventImplSharedPtr);

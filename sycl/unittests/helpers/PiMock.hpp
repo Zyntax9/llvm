@@ -119,7 +119,7 @@ public:
   explicit PiMock(const cl::sycl::platform &OriginalPlatform) {
     assert(!OriginalPlatform.is_host() && "PI mock isn't supported for host");
     // Extract impl and plugin handles
-    std::shared_ptr<detail::platform_impl> ImplPtr =
+    sycl::detail::shared_ptr<detail::platform_impl> ImplPtr =
         detail::getSyclObjImpl(OriginalPlatform);
     const detail::plugin &OriginalPiPlugin = ImplPtr->getPlugin();
     // Copy the PiPlugin, thus untying our to-be mock platform from other

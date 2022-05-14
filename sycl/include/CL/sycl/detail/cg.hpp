@@ -26,6 +26,7 @@
 #include <CL/sycl/nd_item.hpp>
 #include <CL/sycl/range.hpp>
 
+
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -45,7 +46,7 @@ namespace detail {
 // approach is implemented:
 //
 // Those classes have a member - MSharedPtrStorage which is an std::vector of
-// std::shared_ptr's and is supposed to hold reference counters of user
+// detail::shared_ptr's and is supposed to hold reference counters of user
 // provided shared_ptr's.
 //
 // The first element of this vector is reused to store a vector of additional
@@ -56,7 +57,7 @@ namespace detail {
 // understand how the value the pointer points to should be interpreted.
 //
 // ========  ========      ========
-// |      |  |      | ...  |      | std::vector<std::shared_ptr<void>>
+// |      |  |      | ...  |      | std::vector<detail::shared_ptr<void>>
 // ========  ========      ========
 //    ||        ||            ||
 //    ||        \/            \/
@@ -106,11 +107,11 @@ enum class ExtendedMembersType : unsigned int {
 // would change handler layout.
 struct ExtendedMemberT {
   ExtendedMembersType MType;
-  std::shared_ptr<void> MData;
+  detail::shared_ptr<void> MData;
 };
 
-static std::shared_ptr<std::vector<ExtendedMemberT>>
-convertToExtendedMembers(const std::shared_ptr<const void> &SPtr) {
+static detail::shared_ptr<std::vector<ExtendedMemberT>>
+convertToExtendedMembers(const detail::shared_ptr<const void> &SPtr) {
   return std::const_pointer_cast<std::vector<ExtendedMemberT>>(
       std::static_pointer_cast<const std::vector<ExtendedMemberT>>(SPtr));
 }
@@ -174,7 +175,7 @@ public:
 
   CG(CGTYPE Type, std::vector<std::vector<char>> ArgsStorage,
      std::vector<detail::AccessorImplPtr> AccStorage,
-     std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+     std::vector<detail::shared_ptr<const void>> SharedPtrStorage,
      std::vector<Requirement *> Requirements,
      std::vector<detail::EventImplPtr> Events, detail::code_location loc = {})
       : MType(Type), MArgsStorage(std::move(ArgsStorage)),
@@ -200,7 +201,7 @@ public:
     return static_cast<CG_VERSION>(getCGTypeVersion(MType));
   }
 
-  std::shared_ptr<std::vector<ExtendedMemberT>> getExtendedMembers() {
+  detail::shared_ptr<std::vector<ExtendedMemberT>> getExtendedMembers() {
     if (getCGTypeVersion(MType) == static_cast<unsigned int>(CG_VERSION::V0) ||
         MSharedPtrStorage.empty())
       return nullptr;
@@ -221,7 +222,7 @@ private:
   /// Storage for accessors.
   std::vector<detail::AccessorImplPtr> MAccStorage;
   /// Storage for shared_ptrs.
-  std::vector<std::shared_ptr<const void>> MSharedPtrStorage;
+  std::vector<detail::shared_ptr<const void>> MSharedPtrStorage;
 
 public:
   /// List of requirements that specify which memory is needed for the command
@@ -243,24 +244,24 @@ public:
   /// Stores ND-range description.
   NDRDescT MNDRDesc;
   std::unique_ptr<HostKernelBase> MHostKernel;
-  std::shared_ptr<detail::kernel_impl> MSyclKernel;
+  detail::shared_ptr<detail::kernel_impl> MSyclKernel;
   std::vector<ArgDesc> MArgs;
   std::string MKernelName;
   detail::OSModuleHandle MOSModuleHandle;
-  std::vector<std::shared_ptr<detail::stream_impl>> MStreams;
-  std::vector<std::shared_ptr<const void>> MAuxiliaryResources;
+  std::vector<detail::shared_ptr<detail::stream_impl>> MStreams;
+  std::vector<detail::shared_ptr<const void>> MAuxiliaryResources;
 
   CGExecKernel(NDRDescT NDRDesc, std::unique_ptr<HostKernelBase> HKernel,
-               std::shared_ptr<detail::kernel_impl> SyclKernel,
+               detail::shared_ptr<detail::kernel_impl> SyclKernel,
                std::vector<std::vector<char>> ArgsStorage,
                std::vector<detail::AccessorImplPtr> AccStorage,
-               std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+               std::vector<detail::shared_ptr<const void>> SharedPtrStorage,
                std::vector<Requirement *> Requirements,
                std::vector<detail::EventImplPtr> Events,
                std::vector<ArgDesc> Args, std::string KernelName,
                detail::OSModuleHandle OSModuleHandle,
-               std::vector<std::shared_ptr<detail::stream_impl>> Streams,
-               std::vector<std::shared_ptr<const void>> AuxiliaryResources,
+               std::vector<detail::shared_ptr<detail::stream_impl>> Streams,
+               std::vector<detail::shared_ptr<const void>> AuxiliaryResources,
                CGTYPE Type, detail::code_location loc = {})
       : CG(Type, std::move(ArgsStorage), std::move(AccStorage),
            std::move(SharedPtrStorage), std::move(Requirements),
@@ -276,16 +277,16 @@ public:
 
   std::vector<ArgDesc> getArguments() const { return MArgs; }
   std::string getKernelName() const { return MKernelName; }
-  std::vector<std::shared_ptr<detail::stream_impl>> getStreams() const {
+  std::vector<detail::shared_ptr<detail::stream_impl>> getStreams() const {
     return MStreams;
   }
 
-  std::vector<std::shared_ptr<const void>> getAuxiliaryResources() const {
+  std::vector<detail::shared_ptr<const void>> getAuxiliaryResources() const {
     return MAuxiliaryResources;
   }
 
-  std::shared_ptr<detail::kernel_bundle_impl> getKernelBundle() {
-    const std::shared_ptr<std::vector<ExtendedMemberT>> &ExtendedMembers =
+  detail::shared_ptr<detail::kernel_bundle_impl> getKernelBundle() {
+    const detail::shared_ptr<std::vector<ExtendedMemberT>> &ExtendedMembers =
         getExtendedMembers();
     if (!ExtendedMembers)
       return nullptr;
@@ -312,7 +313,7 @@ public:
   CGCopy(CGTYPE CopyType, void *Src, void *Dst,
          std::vector<std::vector<char>> ArgsStorage,
          std::vector<detail::AccessorImplPtr> AccStorage,
-         std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+         std::vector<detail::shared_ptr<const void>> SharedPtrStorage,
          std::vector<Requirement *> Requirements,
          std::vector<detail::EventImplPtr> Events,
          detail::code_location loc = {})
@@ -333,7 +334,7 @@ public:
   CGFill(std::vector<char> Pattern, void *Ptr,
          std::vector<std::vector<char>> ArgsStorage,
          std::vector<detail::AccessorImplPtr> AccStorage,
-         std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+         std::vector<detail::shared_ptr<const void>> SharedPtrStorage,
          std::vector<Requirement *> Requirements,
          std::vector<detail::EventImplPtr> Events,
          detail::code_location loc = {})
@@ -351,7 +352,7 @@ class CGUpdateHost : public CG {
 public:
   CGUpdateHost(void *Ptr, std::vector<std::vector<char>> ArgsStorage,
                std::vector<detail::AccessorImplPtr> AccStorage,
-               std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+               std::vector<detail::shared_ptr<const void>> SharedPtrStorage,
                std::vector<Requirement *> Requirements,
                std::vector<detail::EventImplPtr> Events,
                detail::code_location loc = {})
@@ -373,7 +374,7 @@ public:
   CGCopyUSM(void *Src, void *Dst, size_t Length,
             std::vector<std::vector<char>> ArgsStorage,
             std::vector<detail::AccessorImplPtr> AccStorage,
-            std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+            std::vector<detail::shared_ptr<const void>> SharedPtrStorage,
             std::vector<Requirement *> Requirements,
             std::vector<detail::EventImplPtr> Events,
             detail::code_location loc = {})
@@ -397,7 +398,7 @@ public:
   CGFillUSM(std::vector<char> Pattern, void *DstPtr, size_t Length,
             std::vector<std::vector<char>> ArgsStorage,
             std::vector<detail::AccessorImplPtr> AccStorage,
-            std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+            std::vector<detail::shared_ptr<const void>> SharedPtrStorage,
             std::vector<Requirement *> Requirements,
             std::vector<detail::EventImplPtr> Events,
             detail::code_location loc = {})
@@ -419,7 +420,7 @@ public:
   CGPrefetchUSM(void *DstPtr, size_t Length,
                 std::vector<std::vector<char>> ArgsStorage,
                 std::vector<detail::AccessorImplPtr> AccStorage,
-                std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+                std::vector<detail::shared_ptr<const void>> SharedPtrStorage,
                 std::vector<Requirement *> Requirements,
                 std::vector<detail::EventImplPtr> Events,
                 detail::code_location loc = {})
@@ -440,7 +441,7 @@ public:
   CGAdviseUSM(void *DstPtr, size_t Length,
               std::vector<std::vector<char>> ArgsStorage,
               std::vector<detail::AccessorImplPtr> AccStorage,
-              std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+              std::vector<detail::shared_ptr<const void>> SharedPtrStorage,
               std::vector<Requirement *> Requirements,
               std::vector<detail::EventImplPtr> Events, CGTYPE Type,
               detail::code_location loc = {})
@@ -469,7 +470,7 @@ public:
   CGInteropTask(std::unique_ptr<InteropTask> InteropTask,
                 std::vector<std::vector<char>> ArgsStorage,
                 std::vector<detail::AccessorImplPtr> AccStorage,
-                std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+                std::vector<detail::shared_ptr<const void>> SharedPtrStorage,
                 std::vector<Requirement *> Requirements,
                 std::vector<detail::EventImplPtr> Events, CGTYPE Type,
                 detail::code_location loc = {})
@@ -483,18 +484,18 @@ class CGHostTask : public CG {
 public:
   std::unique_ptr<HostTask> MHostTask;
   // queue for host-interop task
-  std::shared_ptr<detail::queue_impl> MQueue;
+  detail::shared_ptr<detail::queue_impl> MQueue;
   // context for host-interop task
-  std::shared_ptr<detail::context_impl> MContext;
+  detail::shared_ptr<detail::context_impl> MContext;
   std::vector<ArgDesc> MArgs;
 
   CGHostTask(std::unique_ptr<HostTask> HostTask,
-             std::shared_ptr<detail::queue_impl> Queue,
-             std::shared_ptr<detail::context_impl> Context,
+             detail::shared_ptr<detail::queue_impl> Queue,
+             detail::shared_ptr<detail::context_impl> Context,
              std::vector<ArgDesc> Args,
              std::vector<std::vector<char>> ArgsStorage,
              std::vector<detail::AccessorImplPtr> AccStorage,
-             std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+             std::vector<detail::shared_ptr<const void>> SharedPtrStorage,
              std::vector<Requirement *> Requirements,
              std::vector<detail::EventImplPtr> Events, CGTYPE Type,
              detail::code_location loc = {})
@@ -512,7 +513,7 @@ public:
   CGBarrier(std::vector<detail::EventImplPtr> EventsWaitWithBarrier,
             std::vector<std::vector<char>> ArgsStorage,
             std::vector<detail::AccessorImplPtr> AccStorage,
-            std::vector<std::shared_ptr<const void>> SharedPtrStorage,
+            std::vector<detail::shared_ptr<const void>> SharedPtrStorage,
             std::vector<Requirement *> Requirements,
             std::vector<detail::EventImplPtr> Events, CGTYPE Type,
             detail::code_location loc = {})

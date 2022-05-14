@@ -21,6 +21,7 @@
 #include <detail/plugin.hpp>
 #include <detail/program_manager/program_manager.hpp>
 
+
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -57,7 +58,7 @@ public:
 
   device_image_impl(const RTDeviceBinaryImage *BinImage, context Context,
                     std::vector<device> Devices, bundle_state State,
-                    std::shared_ptr<std::vector<kernel_id>> KernelIDs,
+                    detail::shared_ptr<std::vector<kernel_id>> KernelIDs,
                     RT::PiProgram Program)
       : MBinImage(BinImage), MContext(std::move(Context)),
         MDevices(std::move(Devices)), MState(State), MProgram(Program),
@@ -67,7 +68,7 @@ public:
 
   device_image_impl(const RTDeviceBinaryImage *BinImage, context Context,
                     std::vector<device> Devices, bundle_state State,
-                    std::shared_ptr<std::vector<kernel_id>> KernelIDs,
+                    detail::shared_ptr<std::vector<kernel_id>> KernelIDs,
                     RT::PiProgram Program, const SpecConstMapT &SpecConstMap,
                     const std::vector<unsigned char> &SpecConstsBlob)
       : MBinImage(BinImage), MContext(std::move(Context)),
@@ -183,7 +184,7 @@ public:
 
   const context &get_context() const noexcept { return MContext; }
 
-  std::shared_ptr<std::vector<kernel_id>> &get_kernel_ids_ptr() noexcept {
+  detail::shared_ptr<std::vector<kernel_id>> &get_kernel_ids_ptr() noexcept {
     return MKernelIDs;
   }
 
@@ -321,7 +322,7 @@ private:
   RT::PiProgram MProgram = nullptr;
   // List of kernel ids available in this image, elements should be sorted
   // according to LessByNameComp
-  std::shared_ptr<std::vector<kernel_id>> MKernelIDs;
+  detail::shared_ptr<std::vector<kernel_id>> MKernelIDs;
 
   // A mutex for sycnhronizing access to spec constants blob. Mutable because
   // needs to be locked in the const method for getting spec constant value.

@@ -208,14 +208,14 @@ public:
 
 private:
   /// Constructs a SYCL kernel object from a valid kernel_impl instance.
-  kernel(std::shared_ptr<detail::kernel_impl> Impl);
+  kernel(detail::shared_ptr<detail::kernel_impl> Impl);
 
   pi_native_handle getNative() const;
 
   __SYCL_DEPRECATED("Use getNative() member function")
   pi_native_handle getNativeImpl() const;
 
-  std::shared_ptr<detail::kernel_impl> impl;
+  detail::shared_ptr<detail::kernel_impl> impl;
 
   template <class Obj>
   friend decltype(Obj::impl) detail::getSyclObjImpl(const Obj &SyclObject);
@@ -228,7 +228,7 @@ private:
 namespace std {
 template <> struct hash<cl::sycl::kernel> {
   size_t operator()(const cl::sycl::kernel &Kernel) const {
-    return hash<std::shared_ptr<cl::sycl::detail::kernel_impl>>()(
+    return hash<cl::sycl::detail::shared_ptr<cl::sycl::detail::kernel_impl>>()(
         cl::sycl::detail::getSyclObjImpl(Kernel));
   }
 };

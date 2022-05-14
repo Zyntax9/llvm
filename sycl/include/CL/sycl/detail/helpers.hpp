@@ -49,7 +49,7 @@ class context_impl;
 // dependency list and waits for others.
 __SYCL_EXPORT std::vector<RT::PiEvent>
 getOrWaitEvents(std::vector<cl::sycl::event> DepEvents,
-                std::shared_ptr<cl::sycl::detail::context_impl> Context);
+                detail::shared_ptr<cl::sycl::detail::context_impl> Context);
 
 __SYCL_EXPORT void waitEvents(std::vector<cl::sycl::event> DepEvents);
 

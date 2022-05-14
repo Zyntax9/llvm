@@ -28,9 +28,9 @@ namespace detail {
 class program_impl;
 class kernel_bundle_impl;
 
-using ContextImplPtr = std::shared_ptr<context_impl>;
-using ProgramImplPtr = std::shared_ptr<program_impl>;
-using KernelBundleImplPtr = std::shared_ptr<kernel_bundle_impl>;
+using ContextImplPtr = detail::shared_ptr<context_impl>;
+using ProgramImplPtr = detail::shared_ptr<program_impl>;
+using KernelBundleImplPtr = detail::shared_ptr<kernel_bundle_impl>;
 class kernel_impl {
 public:
   /// Constructs a SYCL kernel instance from a PiKernel

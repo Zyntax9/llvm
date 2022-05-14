@@ -27,7 +27,7 @@ namespace sycl {
 // Forward declaration
 class device;
 namespace detail {
-using PlatformImplPtr = std::shared_ptr<detail::platform_impl>;
+using PlatformImplPtr = detail::shared_ptr<detail::platform_impl>;
 class context_impl {
 public:
   /// Constructs a context_impl using a single SYCL devices.
@@ -160,7 +160,7 @@ public:
   KernelProgramCache &getKernelProgramCache() const;
 
   /// Returns true if and only if context contains the given device.
-  bool hasDevice(std::shared_ptr<detail::device_impl> Device) const;
+  bool hasDevice(detail::shared_ptr<detail::device_impl> Device) const;
 
   /// Gets the native handle of the SYCL context.
   ///

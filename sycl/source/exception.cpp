@@ -63,7 +63,7 @@ exception::exception(context Ctx, int EV, const std::error_category &ECat)
     : exception(Ctx, EV, ECat, "") {}
 
 // protected base constructor for all SYCL 2020 constructors
-exception::exception(std::error_code EC, std::shared_ptr<context> SharedPtrCtx,
+exception::exception(std::error_code EC, detail::shared_ptr<context> SharedPtrCtx,
                      const std::string &WhatArg)
     : MMsg(WhatArg + ReservedForErrorcode), MCLErr(PI_INVALID_VALUE),
       MContext(SharedPtrCtx) {

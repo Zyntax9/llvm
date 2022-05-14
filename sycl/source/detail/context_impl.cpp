@@ -21,6 +21,7 @@
 #include <detail/context_info.hpp>
 #include <detail/platform_impl.hpp>
 
+
 __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl {
 namespace detail {
@@ -83,7 +84,7 @@ context_impl::context_impl(RT::PiContext PiContext, async_handler AsyncHandler,
                                            &DeviceIds[0], nullptr);
 
   if (!DeviceIds.empty()) {
-    std::shared_ptr<detail::platform_impl> Platform =
+    detail::shared_ptr<detail::platform_impl> Platform =
         platform_impl::getPlatformFromPiDevice(DeviceIds[0], Plugin);
     for (RT::PiDevice Dev : DeviceIds) {
       MDevices.emplace_back(createSyclObjFromImpl<device>(
@@ -192,7 +193,7 @@ KernelProgramCache &context_impl::getKernelProgramCache() const {
 }
 
 bool context_impl::hasDevice(
-    std::shared_ptr<detail::device_impl> Device) const {
+    detail::shared_ptr<detail::device_impl> Device) const {
   for (auto D : MDevices)
     if (getSyclObjImpl(D) == Device)
       return true;

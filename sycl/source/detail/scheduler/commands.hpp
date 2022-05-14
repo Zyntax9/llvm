@@ -23,6 +23,7 @@
 #include <detail/event_impl.hpp>
 #include <detail/program_manager/program_manager.hpp>
 
+
 __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl {
 namespace detail {
@@ -32,10 +33,10 @@ class event_impl;
 class context_impl;
 class DispatchHostTask;
 
-using QueueImplPtr = std::shared_ptr<detail::queue_impl>;
-using EventImplPtr = std::shared_ptr<detail::event_impl>;
-using ContextImplPtr = std::shared_ptr<detail::context_impl>;
-using StreamImplPtr = std::shared_ptr<detail::stream_impl>;
+using QueueImplPtr = detail::shared_ptr<detail::queue_impl>;
+using EventImplPtr = detail::shared_ptr<detail::event_impl>;
+using ContextImplPtr = detail::shared_ptr<detail::context_impl>;
+using StreamImplPtr = detail::shared_ptr<detail::stream_impl>;
 
 class Command;
 class AllocaCommand;
@@ -528,8 +529,8 @@ private:
 
 cl_int enqueueImpKernel(
     const QueueImplPtr &Queue, NDRDescT &NDRDesc, std::vector<ArgDesc> &Args,
-    const std::shared_ptr<detail::kernel_bundle_impl> &KernelBundleImplPtr,
-    const std::shared_ptr<detail::kernel_impl> &MSyclKernel,
+    const detail::shared_ptr<detail::kernel_bundle_impl> &KernelBundleImplPtr,
+    const detail::shared_ptr<detail::kernel_impl> &MSyclKernel,
     const std::string &KernelName, const detail::OSModuleHandle &OSModuleHandle,
     std::vector<RT::PiEvent> &RawEvents, RT::PiEvent *OutEvent,
     const std::function<void *(Requirement *Req)> &getMemAllocationFunc);
@@ -541,7 +542,7 @@ public:
   ExecCGCommand(std::unique_ptr<detail::CG> CommandGroup, QueueImplPtr Queue);
 
   std::vector<StreamImplPtr> getStreams() const;
-  std::vector<std::shared_ptr<const void>> getAuxiliaryResources() const;
+  std::vector<detail::shared_ptr<const void>> getAuxiliaryResources() const;
 
   void clearStreams();
   void clearAuxiliaryResources();

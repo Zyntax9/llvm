@@ -9,6 +9,7 @@
 #include <detail/kernel_bundle_impl.hpp>
 #include <detail/kernel_id_impl.hpp>
 
+
 #include <set>
 
 __SYCL_INLINE_NAMESPACE(cl) {
@@ -144,13 +145,13 @@ get_empty_interop_kernel_bundle_impl(const context &Ctx,
   return std::make_shared<detail::kernel_bundle_impl>(Ctx, Devs);
 }
 
-std::shared_ptr<detail::kernel_bundle_impl>
+detail::shared_ptr<detail::kernel_bundle_impl>
 join_impl(const std::vector<detail::KernelBundleImplPtr> &Bundles) {
   return std::make_shared<detail::kernel_bundle_impl>(Bundles,
                                                       bundle_state::input);
 }
 
-std::shared_ptr<detail::kernel_bundle_impl>
+detail::shared_ptr<detail::kernel_bundle_impl>
 join_impl(const std::vector<detail::KernelBundleImplPtr> &Bundles,
           bundle_state State) {
   return std::make_shared<detail::kernel_bundle_impl>(Bundles, State);
@@ -215,7 +216,7 @@ bool has_kernel_bundle_impl(const context &Ctx, const std::vector<device> &Devs,
 
   std::set<kernel_id, LessByNameComp> CombinedKernelIDs;
   for (const device_image_plain &DeviceImage : DeviceImages) {
-    const std::shared_ptr<device_image_impl> &DeviceImageImpl =
+    const detail::shared_ptr<device_image_impl> &DeviceImageImpl =
         getSyclObjImpl(DeviceImage);
 
     CombinedKernelIDs.insert(DeviceImageImpl->get_kernel_ids_ptr()->begin(),
@@ -234,21 +235,21 @@ bool has_kernel_bundle_impl(const context &Ctx, const std::vector<device> &Devs,
   return AllKernelIDsRepresented;
 }
 
-std::shared_ptr<detail::kernel_bundle_impl>
+detail::shared_ptr<detail::kernel_bundle_impl>
 compile_impl(const kernel_bundle<bundle_state::input> &InputBundle,
              const std::vector<device> &Devs, const property_list &PropList) {
   return std::make_shared<detail::kernel_bundle_impl>(
       InputBundle, Devs, PropList, bundle_state::object);
 }
 
-std::shared_ptr<detail::kernel_bundle_impl>
+detail::shared_ptr<detail::kernel_bundle_impl>
 link_impl(const std::vector<kernel_bundle<bundle_state::object>> &ObjectBundles,
           const std::vector<device> &Devs, const property_list &PropList) {
   return std::make_shared<detail::kernel_bundle_impl>(ObjectBundles, Devs,
                                                       PropList);
 }
 
-std::shared_ptr<detail::kernel_bundle_impl>
+detail::shared_ptr<detail::kernel_bundle_impl>
 build_impl(const kernel_bundle<bundle_state::input> &InputBundle,
            const std::vector<device> &Devs, const property_list &PropList) {
   return std::make_shared<detail::kernel_bundle_impl>(

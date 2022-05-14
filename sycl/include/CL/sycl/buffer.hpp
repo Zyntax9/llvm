@@ -173,7 +173,7 @@ public:
                                   sizeof(T), rangeToArray(Range).data());
   }
 
-  buffer(const std::shared_ptr<T> &hostData,
+  buffer(const detail::shared_ptr<T> &hostData,
          const range<dimensions> &bufferRange, AllocatorT allocator,
          const property_list &propList = {},
          const detail::code_location CodeLoc = detail::code_location::current())
@@ -189,7 +189,7 @@ public:
                                   sizeof(T), rangeToArray(Range).data());
   }
 
-  buffer(const std::shared_ptr<T[]> &hostData,
+  buffer(const detail::shared_ptr<T[]> &hostData,
          const range<dimensions> &bufferRange, AllocatorT allocator,
          const property_list &propList = {},
          const detail::code_location CodeLoc = detail::code_location::current())
@@ -205,7 +205,7 @@ public:
                                   sizeof(T), rangeToArray(Range).data());
   }
 
-  buffer(const std::shared_ptr<T> &hostData,
+  buffer(const detail::shared_ptr<T> &hostData,
          const range<dimensions> &bufferRange,
          const property_list &propList = {},
          const detail::code_location CodeLoc = detail::code_location::current())
@@ -220,7 +220,7 @@ public:
                                   sizeof(T), rangeToArray(Range).data());
   }
 
-  buffer(const std::shared_ptr<T[]> &hostData,
+  buffer(const detail::shared_ptr<T[]> &hostData,
          const range<dimensions> &bufferRange,
          const property_list &propList = {},
          const detail::code_location CodeLoc = detail::code_location::current())
@@ -530,7 +530,7 @@ protected:
   }
 
 private:
-  std::shared_ptr<detail::buffer_impl> impl;
+  detail::shared_ptr<detail::buffer_impl> impl;
   template <class Obj>
   friend decltype(Obj::impl) detail::getSyclObjImpl(const Obj &SyclObject);
   template <typename A, int dims, typename C, typename Enable>
@@ -565,7 +565,7 @@ private:
   }
 
   // Reinterpret contructor
-  buffer(std::shared_ptr<detail::buffer_impl> Impl,
+  buffer(detail::shared_ptr<detail::buffer_impl> Impl,
          range<dimensions> reinterpretRange, size_t reinterpretOffset,
          bool isSubBuffer,
          const detail::code_location CodeLoc = detail::code_location::current())
@@ -662,7 +662,7 @@ template <typename T, int dimensions, typename AllocatorT>
 struct hash<cl::sycl::buffer<T, dimensions, AllocatorT>> {
   size_t
   operator()(const cl::sycl::buffer<T, dimensions, AllocatorT> &b) const {
-    return hash<std::shared_ptr<cl::sycl::detail::buffer_impl>>()(
+    return hash<cl::sycl::detail::shared_ptr<cl::sycl::detail::buffer_impl>>()(
         cl::sycl::detail::getSyclObjImpl(b));
   }
 };

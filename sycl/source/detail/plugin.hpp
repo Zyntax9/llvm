@@ -89,7 +89,7 @@ auto packCallArguments(ArgsT &&... Args) {
 class plugin {
 public:
   plugin() = delete;
-  plugin(const std::shared_ptr<RT::PiPlugin> &Plugin, backend UseBackend,
+  plugin(const detail::shared_ptr<RT::PiPlugin> &Plugin, backend UseBackend,
          void *LibraryHandle)
       : MPlugin(Plugin), MBackend(UseBackend), MLibraryHandle(LibraryHandle),
         TracingMutex(std::make_shared<std::mutex>()),
@@ -104,7 +104,7 @@ public:
 
   const RT::PiPlugin &getPiPlugin() const { return *MPlugin; }
   RT::PiPlugin &getPiPlugin() { return *MPlugin; }
-  const std::shared_ptr<RT::PiPlugin> &getPiPluginPtr() const {
+  const detail::shared_ptr<RT::PiPlugin> &getPiPluginPtr() const {
     return MPlugin;
   }
 
@@ -253,17 +253,17 @@ public:
     return It != PiPlatforms.end();
   }
 
-  std::shared_ptr<std::mutex> getPluginMutex() { return MPluginMutex; }
+  detail::shared_ptr<std::mutex> getPluginMutex() { return MPluginMutex; }
 
 private:
-  std::shared_ptr<RT::PiPlugin> MPlugin;
+  detail::shared_ptr<RT::PiPlugin> MPlugin;
   backend MBackend;
   void *MLibraryHandle; // the handle returned from dlopen
-  std::shared_ptr<std::mutex> TracingMutex;
+  detail::shared_ptr<std::mutex> TracingMutex;
   // Mutex to guard PiPlatforms and LastDeviceIds.
   // Note that this is a temporary solution until we implement the global
   // Device/Platform cache later.
-  std::shared_ptr<std::mutex> MPluginMutex;
+  detail::shared_ptr<std::mutex> MPluginMutex;
   // vector of PiPlatforms that belong to this plugin
   std::vector<RT::PiPlatform> PiPlatforms;
   // represents the unique ids of the last device of each platform

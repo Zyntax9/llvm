@@ -122,12 +122,13 @@ inline pi_result redefinedProgramCreateEAM(pi_context, const void *, size_t,
 class MockHandler : public sycl::handler {
 
 public:
-  MockHandler(std::shared_ptr<sycl::detail::queue_impl> Queue)
+  MockHandler(sycl::detail::shared_ptr<sycl::detail::queue_impl> Queue)
       : sycl::handler(Queue, /* IsHost */ false) {}
 
   std::unique_ptr<sycl::detail::CG> finalize() {
     auto CGH = static_cast<sycl::handler *>(this);
-    std::shared_ptr<sycl::detail::handler_impl> Impl = evictHandlerImpl();
+    sycl::detail::shared_ptr<sycl::detail::handler_impl> Impl =
+        evictHandlerImpl();
     std::unique_ptr<sycl::detail::CG> CommandGroup;
     switch (getType()) {
     case sycl::detail::CG::Kernel: {
@@ -152,7 +153,7 @@ public:
 
 sycl::detail::ProgramManager::KernelArgMask getKernelArgMaskFromBundle(
     const sycl::kernel_bundle<sycl::bundle_state::input> &KernelBundle,
-    std::shared_ptr<sycl::detail::queue_impl> QueueImpl) {
+    sycl::detail::shared_ptr<sycl::detail::queue_impl> QueueImpl) {
 
   auto ExecBundle = sycl::link(sycl::compile(KernelBundle));
   EXPECT_FALSE(ExecBundle.empty()) << "Expect non-empty exec kernel bundle";
@@ -174,7 +175,7 @@ sycl::detail::ProgramManager::KernelArgMask getKernelArgMaskFromBundle(
   sycl::kernel SyclKernel =
       KernelBundleImplPtr->get_kernel(KernelID, KernelBundleImplPtr);
   auto SyclKernelImpl = sycl::detail::getSyclObjImpl(SyclKernel);
-  std::shared_ptr<sycl::detail::device_image_impl> DeviceImageImpl =
+  sycl::detail::shared_ptr<sycl::detail::device_image_impl> DeviceImageImpl =
       SyclKernelImpl->getDeviceImage();
   sycl::detail::pi::PiProgram Program = DeviceImageImpl->get_program_ref();
 

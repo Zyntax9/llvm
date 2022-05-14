@@ -9,6 +9,7 @@
 #pragma once
 
 #include <CL/sycl/detail/spinlock.hpp>
+#include <CL/sycl/detail/tracked_memory.hpp>
 #include <CL/sycl/detail/util.hpp>
 
 #include <memory>
@@ -27,8 +28,8 @@ class device_filter_list;
 class XPTIRegistry;
 class ThreadPool;
 
-using PlatformImplPtr = std::shared_ptr<platform_impl>;
-using ContextImplPtr = std::shared_ptr<context_impl>;
+using PlatformImplPtr = detail::shared_ptr<platform_impl>;
+using ContextImplPtr = detail::shared_ptr<context_impl>;
 
 /// Wrapper class for global data structures with non-trivial destructors.
 ///

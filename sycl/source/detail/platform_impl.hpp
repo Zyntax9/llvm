@@ -42,7 +42,7 @@ public:
       : MPlatform(APlatform), MPlugin(std::make_shared<plugin>(APlugin)) {}
 
   explicit platform_impl(RT::PiPlatform APlatform,
-                         std::shared_ptr<plugin> APlugin)
+                         detail::shared_ptr<plugin> APlugin)
       : MPlatform(APlatform), MPlugin(APlugin) {}
 
   ~platform_impl() = default;
@@ -118,7 +118,7 @@ public:
   /// Sets the platform implementation to use another plugin.
   ///
   /// \param PluginPtr is a pointer to a plugin instance
-  void setPlugin(std::shared_ptr<plugin> PluginPtr) {
+  void setPlugin(detail::shared_ptr<plugin> PluginPtr) {
     assert(!MHostPlatform && "Plugin is not available for Host");
     MPlugin = std::move(PluginPtr);
   }
@@ -147,9 +147,9 @@ public:
   /// \param PlatormImpl is the Platform for that Device
   ///
   /// \return a shared_ptr<device_impl> corresponding to the device
-  std::shared_ptr<device_impl>
+  detail::shared_ptr<device_impl>
   getOrMakeDeviceImpl(RT::PiDevice PiDevice,
-                      const std::shared_ptr<platform_impl> &PlatformImpl);
+                      const detail::shared_ptr<platform_impl> &PlatformImpl);
 
   /// Static functions that help maintain platform uniquess and
   /// equality of comparison
@@ -157,7 +157,7 @@ public:
   /// Returns the host platform impl
   ///
   /// \return the host platform impl
-  static std::shared_ptr<platform_impl> getHostPlatformImpl();
+  static detail::shared_ptr<platform_impl> getHostPlatformImpl();
 
   /// Queries the cache to see if the specified PiPlatform has been seen
   /// before.  If so, return the cached platform_impl, otherwise create a new
@@ -166,7 +166,7 @@ public:
   /// \param PiPlatform is the PI Platform handle representing the platform
   /// \param Plugin is the PI plugin providing the backend for the platform
   /// \return the platform_impl representing the PI platform
-  static std::shared_ptr<platform_impl>
+  static detail::shared_ptr<platform_impl>
   getOrMakePlatformImpl(RT::PiPlatform PiPlatform, const plugin &Plugin);
 
   /// Queries the cache for the specified platform based on an input device.
@@ -178,13 +178,13 @@ public:
   /// \param Plugin is the PI plugin providing the backend for the device and
   /// platform
   /// \return the platform_impl that contains the input device
-  static std::shared_ptr<platform_impl>
+  static detail::shared_ptr<platform_impl>
   getPlatformFromPiDevice(RT::PiDevice PiDevice, const plugin &Plugin);
 
 private:
   bool MHostPlatform = false;
   RT::PiPlatform MPlatform = 0;
-  std::shared_ptr<plugin> MPlugin;
+  detail::shared_ptr<plugin> MPlugin;
   std::vector<std::weak_ptr<device_impl>> MDeviceCache;
   std::mutex MDeviceMapMutex;
 };

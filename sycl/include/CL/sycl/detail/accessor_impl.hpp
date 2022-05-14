@@ -127,7 +127,7 @@ public:
   bool MIsESIMDAcc;
 };
 
-using AccessorImplPtr = std::shared_ptr<AccessorImplHost>;
+using AccessorImplPtr = detail::shared_ptr<AccessorImplHost>;
 
 class AccessorBaseHost {
 public:
@@ -135,7 +135,7 @@ public:
                    access::mode AccessMode, detail::SYCLMemObjI *SYCLMemObject,
                    int Dims, int ElemSize, int OffsetInBytes = 0,
                    bool IsSubBuffer = false) {
-    impl = std::shared_ptr<AccessorImplHost>(new AccessorImplHost(
+    impl = detail::shared_ptr<AccessorImplHost>(new AccessorImplHost(
         Offset, AccessRange, MemoryRange, AccessMode, SYCLMemObject, Dims,
         ElemSize, OffsetInBytes, IsSubBuffer));
   }
@@ -179,12 +179,12 @@ public:
   std::vector<char> MMem;
 };
 
-using LocalAccessorImplPtr = std::shared_ptr<LocalAccessorImplHost>;
+using LocalAccessorImplPtr = detail::shared_ptr<LocalAccessorImplHost>;
 
 class LocalAccessorBaseHost {
 public:
   LocalAccessorBaseHost(sycl::range<3> Size, int Dims, int ElemSize) {
-    impl = std::shared_ptr<LocalAccessorImplHost>(
+    impl = detail::shared_ptr<LocalAccessorImplHost>(
         new LocalAccessorImplHost(Size, Dims, ElemSize));
   }
   sycl::range<3> &getSize() { return impl->MSize; }
@@ -212,7 +212,7 @@ protected:
   template <class Obj>
   friend decltype(Obj::impl) getSyclObjImpl(const Obj &SyclObject);
 
-  std::shared_ptr<LocalAccessorImplHost> impl;
+  detail::shared_ptr<LocalAccessorImplHost> impl;
 };
 
 using Requirement = AccessorImplHost;

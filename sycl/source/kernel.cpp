@@ -14,6 +14,7 @@
 #include <detail/kernel_bundle_impl.hpp>
 #include <detail/kernel_impl.hpp>
 
+
 __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl {
 
@@ -126,7 +127,7 @@ kernel::get_sub_group_info(
 #undef __SYCL_PARAM_TRAITS_SPEC
 #undef __SYCL_PARAM_TRAITS_SPEC_WITH_INPUT
 
-kernel::kernel(std::shared_ptr<detail::kernel_impl> Impl) : impl(Impl) {}
+kernel::kernel(detail::shared_ptr<detail::kernel_impl> Impl) : impl(Impl) {}
 
 pi_native_handle kernel::getNative() const { return impl->getNative(); }
 

@@ -52,7 +52,7 @@ __SYCL_EXPORT size_t reduComputeWGSize(size_t NWorkItems, size_t MaxWGSize,
 // Returns the estimated number of physical threads on the device associated
 // with the given queue.
 __SYCL_EXPORT uint32_t reduGetMaxNumConcurrentWorkGroups(
-    std::shared_ptr<sycl::detail::queue_impl> Queue) {
+    detail::shared_ptr<sycl::detail::queue_impl> Queue) {
   device Dev = Queue->get_device();
   uint32_t NumThreads = Dev.get_info<info::device::max_compute_units>();
   // TODO: The heuristics here require additional tuning for various devices
@@ -65,7 +65,7 @@ __SYCL_EXPORT uint32_t reduGetMaxNumConcurrentWorkGroups(
 }
 
 __SYCL_EXPORT size_t
-reduGetMaxWGSize(std::shared_ptr<sycl::detail::queue_impl> Queue,
+reduGetMaxWGSize(detail::shared_ptr<sycl::detail::queue_impl> Queue,
                  size_t LocalMemBytesPerWorkItem) {
   device Dev = Queue->get_device();
   size_t MaxWGSize = Dev.get_info<info::device::max_work_group_size>();
@@ -124,7 +124,7 @@ namespace __SYCL2020_DEPRECATED("use 'ext::oneapi' instead") ONEAPI {
   }
 
   __SYCL_EXPORT size_t
-  reduGetMaxWGSize(std::shared_ptr<sycl::detail::queue_impl> Queue,
+  reduGetMaxWGSize(sycl::detail::shared_ptr<sycl::detail::queue_impl> Queue,
                    size_t LocalMemBytesPerWorkItem) {
     return ext::oneapi::detail::reduGetMaxWGSize(Queue,
                                                  LocalMemBytesPerWorkItem);

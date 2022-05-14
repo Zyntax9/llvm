@@ -267,7 +267,7 @@ std::string memFlagsToString(pi_mem_flags Flags) {
 
 // GlobalPlugin is a global Plugin used with Interoperability constructors that
 // use OpenCL objects to construct SYCL class objects.
-std::shared_ptr<plugin> GlobalPlugin;
+detail::shared_ptr<plugin> GlobalPlugin;
 
 // Find the plugin at the appropriate location and return the location.
 std::vector<std::pair<std::string, backend>> findPlugins() {
@@ -347,7 +347,7 @@ int unloadPlugin(void *Library) { return unloadOsLibrary(Library); }
 // needs to setup infrastructure to route PI_CALLs to the appropriate plugins.
 // Currently, we bind to a singe plugin.
 bool bindPlugin(void *Library,
-                const std::shared_ptr<PiPlugin> &PluginInformation) {
+                const detail::shared_ptr<PiPlugin> &PluginInformation) {
 
   decltype(::piPluginInit) *PluginInitializeFunction = (decltype(
       &::piPluginInit))(getOsLibraryFuncAddress(Library, "piPluginInit"));
@@ -389,7 +389,7 @@ static void initializePlugins(std::vector<plugin> &Plugins) {
               << "No Plugins Found." << std::endl;
 
   for (unsigned int I = 0; I < PluginNames.size(); I++) {
-    std::shared_ptr<PiPlugin> PluginInformation = std::make_shared<PiPlugin>(
+    detail::shared_ptr<PiPlugin> PluginInformation = std::make_shared<PiPlugin>(
         PiPlugin{_PI_H_VERSION_STRING, _PI_H_VERSION_STRING,
                  /*Targets=*/nullptr, /*FunctionPointers=*/{}});
 

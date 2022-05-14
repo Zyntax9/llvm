@@ -32,7 +32,7 @@ program::program(std::vector<program> programList,
 
 program::program(std::vector<program> programList, std::string linkOptions,
                  const property_list &PropList) {
-  std::vector<std::shared_ptr<detail::program_impl>> impls;
+  std::vector<detail::shared_ptr<detail::program_impl>> impls;
   for (auto &x : programList) {
     impls.push_back(detail::getSyclObjImpl(x));
   }
@@ -52,7 +52,7 @@ backend program::get_backend() const noexcept { return getImplBackend(impl); }
 
 pi_native_handle program::getNative() const { return impl->getNative(); }
 
-program::program(std::shared_ptr<detail::program_impl> impl) : impl(impl) {}
+program::program(detail::shared_ptr<detail::program_impl> impl) : impl(impl) {}
 
 cl_program program::get() const { return impl->get(); }
 

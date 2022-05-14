@@ -15,6 +15,7 @@
 #include <CL/sycl/detail/export.hpp>
 #include <CL/sycl/detail/helpers.hpp>
 #include <CL/sycl/detail/sycl_mem_obj_t.hpp>
+
 #include <CL/sycl/property_list.hpp>
 #include <CL/sycl/stl.hpp>
 #include <CL/sycl/types.hpp>
@@ -84,7 +85,7 @@ public:
   }
 
   template <typename T>
-  buffer_impl(const std::shared_ptr<T> &HostData, const size_t SizeInBytes,
+  buffer_impl(const detail::shared_ptr<T> &HostData, const size_t SizeInBytes,
               size_t RequiredAlign, const property_list &Props,
               std::unique_ptr<SYCLMemObjAllocator> Allocator)
       : BaseT(SizeInBytes, Props, std::move(Allocator)) {

@@ -15,6 +15,7 @@
 #include <detail/device_info.hpp>
 #include <detail/platform_impl.hpp>
 
+
 #include <memory>
 #include <mutex>
 
@@ -28,7 +29,7 @@ namespace detail {
 
 // Forward declaration
 class platform_impl;
-using PlatformImplPtr = std::shared_ptr<platform_impl>;
+using PlatformImplPtr = detail::shared_ptr<platform_impl>;
 
 // TODO: Make code thread-safe
 class device_impl {
@@ -222,7 +223,7 @@ public:
   /// Gets the single instance of the Host Device
   ///
   /// \return the host device_impl singleton
-  static std::shared_ptr<device_impl> getHostDeviceImpl();
+  static detail::shared_ptr<device_impl> getHostDeviceImpl();
 
   bool isAssertFailSupported() const;
 

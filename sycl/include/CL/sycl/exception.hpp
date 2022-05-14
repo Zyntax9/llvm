@@ -16,6 +16,7 @@
 #include <CL/sycl/detail/pi.h>
 #include <CL/sycl/stl.hpp>
 
+
 #include <exception>
 
 __SYCL_INLINE_NAMESPACE(cl) {
@@ -98,25 +99,25 @@ public:
 private:
   std::string MMsg;
   cl_int MCLErr;
-  std::shared_ptr<context> MContext;
+  detail::shared_ptr<context> MContext;
 
 protected:
   // these two constructors are no longer used. Kept for ABI compatability.
   exception(const char *Msg, const cl_int CLErr,
-            std::shared_ptr<context> Context = nullptr)
+            detail::shared_ptr<context> Context = nullptr)
       : exception(std::string(Msg), CLErr, Context) {}
   exception(const std::string &Msg, const cl_int CLErr,
-            std::shared_ptr<context> Context = nullptr)
+            detail::shared_ptr<context> Context = nullptr)
       : MMsg(Msg + " " + detail::codeToString(CLErr)), MCLErr(CLErr),
         MContext(Context) {}
 
   // base constructors used by SYCL 1.2.1 exception subclasses
   exception(std::error_code ec, const char *Msg, const cl_int CLErr,
-            std::shared_ptr<context> Context = nullptr)
+            detail::shared_ptr<context> Context = nullptr)
       : exception(ec, std::string(Msg), CLErr, Context) {}
 
   exception(std::error_code ec, const std::string &Msg, const cl_int CLErr,
-            std::shared_ptr<context> Context = nullptr)
+            detail::shared_ptr<context> Context = nullptr)
       : exception(ec, Context, Msg + " " + detail::codeToString(CLErr)) {
     MCLErr = CLErr;
   }
@@ -126,7 +127,7 @@ protected:
   // base constructor for all SYCL 2020 constructors
   // exception(context *ctxPtr, std::error_code ec, const std::string
   // &what_arg);
-  exception(std::error_code ec, std::shared_ptr<context> SharedPtrCtx,
+  exception(std::error_code ec, detail::shared_ptr<context> SharedPtrCtx,
             const std::string &what_arg);
 };
 

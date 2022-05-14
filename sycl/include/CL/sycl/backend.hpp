@@ -37,6 +37,7 @@
 #include <CL/sycl/platform.hpp>
 #include <CL/sycl/queue.hpp>
 
+
 #include <type_traits>
 
 __SYCL_INLINE_NAMESPACE(cl) {
@@ -227,10 +228,10 @@ __SYCL_EXPORT kernel make_kernel(
     const kernel_bundle<bundle_state::executable> &KernelBundle,
     pi_native_handle NativeKernelHandle, bool KeepOwnership, backend Backend);
 // TODO: Unused. Remove when allowed.
-__SYCL_EXPORT std::shared_ptr<detail::kernel_bundle_impl>
+__SYCL_EXPORT detail::shared_ptr<detail::kernel_bundle_impl>
 make_kernel_bundle(pi_native_handle NativeHandle, const context &TargetContext,
                    bundle_state State, backend Backend);
-__SYCL_EXPORT std::shared_ptr<detail::kernel_bundle_impl>
+__SYCL_EXPORT detail::shared_ptr<detail::kernel_bundle_impl>
 make_kernel_bundle(pi_native_handle NativeHandle, const context &TargetContext,
                    bool KeepOwnership, bundle_state State, backend Backend);
 } // namespace detail
@@ -342,7 +343,7 @@ typename std::enable_if<
 make_kernel_bundle(const typename backend_traits<Backend>::template input_type<
                        kernel_bundle<State>> &BackendObject,
                    const context &TargetContext) {
-  std::shared_ptr<detail::kernel_bundle_impl> KBImpl =
+  detail::shared_ptr<detail::kernel_bundle_impl> KBImpl =
       detail::make_kernel_bundle(
           detail::pi::cast<pi_native_handle>(BackendObject), TargetContext,
           false, State, Backend);

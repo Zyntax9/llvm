@@ -29,6 +29,7 @@
 #include <CL/sycl/sampler.hpp>
 #include <CL/sycl/stl.hpp>
 
+
 #include <functional>
 #include <limits>
 #include <memory>
@@ -294,21 +295,21 @@ std::enable_if_t<Reduction::is_usm>
 reduSaveFinalResultToUserMem(handler &CGH, Reduction &Redu);
 
 template <typename... Reduction, size_t... Is>
-std::shared_ptr<event>
-reduSaveFinalResultToUserMem(std::shared_ptr<detail::queue_impl> Queue,
+sycl::detail::shared_ptr<event>
+reduSaveFinalResultToUserMem(sycl::detail::shared_ptr<detail::queue_impl> Queue,
                              bool IsHost, std::tuple<Reduction...> &ReduTuple,
                              std::index_sequence<Is...>);
 
 template <typename Reduction, typename... RestT>
 std::enable_if_t<!Reduction::is_usm>
 reduSaveFinalResultToUserMemHelper(std::vector<event> &Events,
-                                   std::shared_ptr<detail::queue_impl> Queue,
+                                   sycl::detail::shared_ptr<detail::queue_impl> Queue,
                                    bool IsHost, Reduction &Redu, RestT... Rest);
 
 __SYCL_EXPORT uint32_t
-reduGetMaxNumConcurrentWorkGroups(std::shared_ptr<queue_impl> Queue);
+reduGetMaxNumConcurrentWorkGroups(sycl::detail::shared_ptr<queue_impl> Queue);
 
-__SYCL_EXPORT size_t reduGetMaxWGSize(std::shared_ptr<queue_impl> Queue,
+__SYCL_EXPORT size_t reduGetMaxWGSize(sycl::detail::shared_ptr<queue_impl> Queue,
                                       size_t LocalMemBytesPerWorkItem);
 
 template <typename... ReductionT, size_t... Is>
@@ -364,7 +365,7 @@ private:
   ///
   /// \param Queue is a SYCL queue.
   /// \param IsHost indicates if this handler is created for SYCL host device.
-  handler(std::shared_ptr<detail::queue_impl> Queue, bool IsHost);
+  handler(detail::shared_ptr<detail::queue_impl> Queue, bool IsHost);
 
   /// Constructs SYCL handler from the associated queue and the submission's
   /// primary and secondary queue.
@@ -375,9 +376,9 @@ private:
   /// \param SecondaryQueue is the secondary SYCL queue of the submission. This
   ///        is null if no secondary queue is associated with the submission.
   /// \param IsHost indicates if this handler is created for SYCL host device.
-  handler(std::shared_ptr<detail::queue_impl> Queue,
-          std::shared_ptr<detail::queue_impl> PrimaryQueue,
-          std::shared_ptr<detail::queue_impl> SecondaryQueue, bool IsHost);
+  handler(detail::shared_ptr<detail::queue_impl> Queue,
+          detail::shared_ptr<detail::queue_impl> PrimaryQueue,
+          detail::shared_ptr<detail::queue_impl> SecondaryQueue, bool IsHost);
 
   /// Stores copy of Arg passed to the MArgsStorage.
   template <typename T, typename F = typename detail::remove_const_t<
@@ -465,7 +466,7 @@ private:
   /// Streams are then forwarded to command group and flushed in the scheduler.
   ///
   /// \param Stream is a pointer to SYCL stream.
-  void addStream(const std::shared_ptr<detail::stream_impl> &Stream) {
+  void addStream(const detail::shared_ptr<detail::stream_impl> &Stream) {
     MStreamStorage.push_back(Stream);
   }
 
@@ -474,7 +475,7 @@ private:
   /// the command group finishes the work on device/host.
   ///
   /// @param ReduObj is a pointer to object that must be stored.
-  void addReduction(const std::shared_ptr<const void> &ReduObj);
+  void addReduction(const detail::shared_ptr<const void> &ReduObj);
 
   ~handler() = default;
 
@@ -1273,18 +1274,18 @@ private:
     kernel_parallel_for_work_group<KernelName, ElementType>(KernelFunc);
   }
 
-  std::shared_ptr<detail::handler_impl> getHandlerImpl() const;
-  std::shared_ptr<detail::handler_impl> evictHandlerImpl() const;
+  detail::shared_ptr<detail::handler_impl> getHandlerImpl() const;
+  detail::shared_ptr<detail::handler_impl> evictHandlerImpl() const;
 
   void setStateExplicitKernelBundle();
   void setStateSpecConstSet();
   bool isStateExplicitKernelBundle() const;
 
-  std::shared_ptr<detail::kernel_bundle_impl>
+  detail::shared_ptr<detail::kernel_bundle_impl>
   getOrInsertHandlerKernelBundle(bool Insert) const;
 
   void setHandlerKernelBundle(
-      const std::shared_ptr<detail::kernel_bundle_impl> &NewKernelBundleImpPtr);
+      const detail::shared_ptr<detail::kernel_bundle_impl> &NewKernelBundleImpPtr);
 
   template <typename FuncT>
   detail::enable_if_t<
@@ -1316,7 +1317,7 @@ public:
 
     setStateSpecConstSet();
 
-    std::shared_ptr<detail::kernel_bundle_impl> KernelBundleImplPtr =
+    detail::shared_ptr<detail::kernel_bundle_impl> KernelBundleImplPtr =
         getOrInsertHandlerKernelBundle(/*Insert=*/true);
 
     detail::createSyclObjFromImpl<kernel_bundle<bundle_state::input>>(
@@ -1333,7 +1334,7 @@ public:
                             "Specialization constants cannot be read after "
                             "explicitly setting the used kernel bundle");
 
-    std::shared_ptr<detail::kernel_bundle_impl> KernelBundleImplPtr =
+    detail::shared_ptr<detail::kernel_bundle_impl> KernelBundleImplPtr =
         getOrInsertHandlerKernelBundle(/*Insert=*/true);
 
     return detail::createSyclObjFromImpl<kernel_bundle<bundle_state::input>>(
@@ -1598,7 +1599,7 @@ public:
             int Dims, typename Reduction>
   void parallel_for(range<Dims> Range, Reduction Redu,
                     _KERNELFUNCPARAM(KernelFunc)) {
-    std::shared_ptr<detail::queue_impl> QueueCopy = MQueue;
+    detail::shared_ptr<detail::queue_impl> QueueCopy = MQueue;
 
     // Before running the kernels, check that device has enough local memory
     // to hold local arrays required for the tree-reduction algorithm.
@@ -1649,7 +1650,7 @@ public:
   detail::enable_if_t<Reduction::has_fast_atomics>
   parallel_for(nd_range<Dims> Range, Reduction Redu,
                _KERNELFUNCPARAM(KernelFunc)) {
-    std::shared_ptr<detail::queue_impl> QueueCopy = MQueue;
+    detail::shared_ptr<detail::queue_impl> QueueCopy = MQueue;
     ext::oneapi::detail::reduCGFunc<KernelName>(*this, KernelFunc, Range, Redu);
 
     if (Reduction::is_usm || Redu.initializeToIdentity()) {
@@ -1684,7 +1685,7 @@ public:
   parallel_for(nd_range<Dims> Range, Reduction Redu,
                _KERNELFUNCPARAM(KernelFunc)) {
 
-    std::shared_ptr<detail::queue_impl> QueueCopy = MQueue;
+    detail::shared_ptr<detail::queue_impl> QueueCopy = MQueue;
     device D = detail::getDeviceFromHandler(*this);
 
     if (D.has(aspect::atomic64)) {
@@ -1771,7 +1772,7 @@ public:
 
     // 1. Call the kernel that includes user's lambda function.
     ext::oneapi::detail::reduCGFunc<KernelName>(*this, KernelFunc, Range, Redu);
-    std::shared_ptr<detail::queue_impl> QueueCopy = MQueue;
+    detail::shared_ptr<detail::queue_impl> QueueCopy = MQueue;
     this->finalize();
 
     // 2. Run the additional kernel as many times as needed to reduce
@@ -1869,7 +1870,7 @@ public:
 
     ext::oneapi::detail::reduCGFunc<KernelName>(*this, KernelFunc, Range,
                                                 ReduTuple, ReduIndices);
-    std::shared_ptr<detail::queue_impl> QueueCopy = MQueue;
+    detail::shared_ptr<detail::queue_impl> QueueCopy = MQueue;
     this->finalize();
 
     size_t NWorkItems = Range.get_group_range().size();
@@ -2279,7 +2280,7 @@ public:
             access::target AccessTarget,
             access::placeholder IsPlaceholder = access::placeholder::false_t>
   void copy(accessor<T_Src, Dims, AccessMode, AccessTarget, IsPlaceholder> Src,
-            std::shared_ptr<T_Dst> Dst) {
+            detail::shared_ptr<T_Dst> Dst) {
     throwIfActionIsCreated();
     static_assert(isValidTargetForExplicitOp(AccessTarget),
                   "Invalid accessor target for the copy method.");
@@ -2288,7 +2289,7 @@ public:
     // Make sure data shared_ptr points to is not released until we finish
     // work with it.
     MSharedPtrStorage.push_back(Dst);
-    typename std::shared_ptr<T_Dst>::element_type *RawDstPtr = Dst.get();
+    typename detail::shared_ptr<T_Dst>::element_type *RawDstPtr = Dst.get();
     copy(Src, RawDstPtr);
   }
 
@@ -2303,7 +2304,7 @@ public:
             access::target AccessTarget,
             access::placeholder IsPlaceholder = access::placeholder::false_t>
   void
-  copy(std::shared_ptr<T_Src> Src,
+  copy(detail::shared_ptr<T_Src> Src,
        accessor<T_Dst, Dims, AccessMode, AccessTarget, IsPlaceholder> Dst) {
     throwIfActionIsCreated();
     static_assert(isValidTargetForExplicitOp(AccessTarget),
@@ -2313,7 +2314,7 @@ public:
     // Make sure data shared_ptr points to is not released until we finish
     // work with it.
     MSharedPtrStorage.push_back(Src);
-    typename std::shared_ptr<T_Src>::element_type *RawSrcPtr = Src.get();
+    typename detail::shared_ptr<T_Src>::element_type *RawSrcPtr = Src.get();
     copy(RawSrcPtr, Dst);
   }
 
@@ -2613,7 +2614,7 @@ public:
   void mem_advise(const void *Ptr, size_t Length, int Advice);
 
 private:
-  std::shared_ptr<detail::queue_impl> MQueue;
+  detail::shared_ptr<detail::queue_impl> MQueue;
   /// The storage for the arguments passed.
   /// We need to store a copy of values that are passed explicitly through
   /// set_arg, require and so on, because we need them to be alive after
@@ -2621,8 +2622,8 @@ private:
   std::vector<std::vector<char>> MArgsStorage;
   std::vector<detail::AccessorImplPtr> MAccStorage;
   std::vector<detail::LocalAccessorImplPtr> MLocalAccStorage;
-  std::vector<std::shared_ptr<detail::stream_impl>> MStreamStorage;
-  mutable std::vector<std::shared_ptr<const void>> MSharedPtrStorage;
+  std::vector<detail::shared_ptr<detail::stream_impl>> MStreamStorage;
+  mutable std::vector<detail::shared_ptr<const void>> MSharedPtrStorage;
   /// The list of arguments for the kernel.
   std::vector<detail::ArgDesc> MArgs;
   /// The list of associated accessors with this handler.
@@ -2635,7 +2636,7 @@ private:
   detail::NDRDescT MNDRDesc;
   std::string MKernelName;
   /// Storage for a sycl::kernel object.
-  std::shared_ptr<detail::kernel_impl> MKernel;
+  detail::shared_ptr<detail::kernel_impl> MKernel;
   /// Type of the command group, e.g. kernel, fill. Can also encode version.
   /// Use getType and setType methods to access this variable unless
   /// manipulations with version are required
@@ -2692,7 +2693,7 @@ private:
   template <typename Reduction, typename... RestT>
   std::enable_if_t<!Reduction::is_usm> friend ext::oneapi::detail::
       reduSaveFinalResultToUserMemHelper(
-          std::vector<event> &Events, std::shared_ptr<detail::queue_impl> Queue,
+          std::vector<event> &Events, sycl::detail::shared_ptr<detail::queue_impl> Queue,
           bool IsHost, Reduction &, RestT...);
 
   friend void detail::associateWithHandler(handler &,

@@ -19,6 +19,7 @@
 #include <CL/sycl/property_list.hpp>
 #include <CL/sycl/stl.hpp>
 
+
 #include <cstring>
 #include <memory>
 #include <type_traits>
@@ -32,8 +33,8 @@ class context_impl;
 class event_impl;
 class plugin;
 
-using ContextImplPtr = std::shared_ptr<context_impl>;
-using EventImplPtr = std::shared_ptr<event_impl>;
+using ContextImplPtr = detail::shared_ptr<context_impl>;
+using EventImplPtr = detail::shared_ptr<event_impl>;
 
 template <typename T>
 class aligned_allocator;
@@ -163,7 +164,7 @@ public:
   template <typename T>
   __SYCL_DLL_LOCAL void set_final_data(std::weak_ptr<T> FinalData) {
     MUploadDataFunctor = [this, FinalData]() {
-      if (std::shared_ptr<T> LockedFinalData = FinalData.lock()) {
+      if (detail::shared_ptr<T> LockedFinalData = FinalData.lock()) {
         updateHostMemory(LockedFinalData.get());
       }
     };
@@ -251,7 +252,7 @@ public:
   }
 
   template <typename T>
-  __SYCL_DLL_LOCAL void handleHostData(const std::shared_ptr<T> &HostPtr,
+  __SYCL_DLL_LOCAL void handleHostData(const detail::shared_ptr<T> &HostPtr,
                                        const size_t RequiredAlign) {
     MSharedPtrStorage = HostPtr;
     MHostPtrReadOnly = std::is_const<T>::value;
@@ -360,7 +361,7 @@ protected:
   std::function<void(void)> MUploadDataFunctor;
   // Field which holds user's shared_ptr in case of memory object is created
   // using constructor with shared_ptr.
-  std::shared_ptr<const void> MSharedPtrStorage;
+  detail::shared_ptr<const void> MSharedPtrStorage;
 };
 
 } // namespace detail

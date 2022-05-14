@@ -25,7 +25,7 @@ class __SYCL_DEPRECATED("interop_handler class is deprecated, use"
   friend class accessor;
 
 public:
-  using QueueImplPtr = std::shared_ptr<detail::queue_impl>;
+  using QueueImplPtr = detail::shared_ptr<detail::queue_impl>;
   using ReqToMem = std::pair<detail::Requirement *, pi_mem>;
 
   interop_handler(std::vector<ReqToMem> MemObjs, QueueImplPtr Queue)

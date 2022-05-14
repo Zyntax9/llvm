@@ -150,7 +150,7 @@ class accessor_property_list : protected sycl::detail::PropertyListBase {
   accessor_property_list(
       std::bitset<sycl::detail::DataLessPropKind::DataLessPropKindSize>
           DataLessProps,
-      std::vector<std::shared_ptr<sycl::detail::PropertyWithDataBase>>
+      std::vector<detail::shared_ptr<sycl::detail::PropertyWithDataBase>>
           PropsWithData)
       : sycl::detail::PropertyListBase(DataLessProps, PropsWithData) {}
 

@@ -223,7 +223,8 @@ TEST_F(SchedulerTest, PostEnqueueCleanup) {
   MockScheduler MS;
 
   buffer<int, 1> Buf{range<1>(1)};
-  std::shared_ptr<detail::buffer_impl> BufImpl = detail::getSyclObjImpl(Buf);
+  sycl::detail::shared_ptr<detail::buffer_impl> BufImpl =
+      detail::getSyclObjImpl(Buf);
   detail::Requirement MockReq = getMockRequirement(Buf);
   MockReq.MDims = 1;
   MockReq.MSYCLMemObj = BufImpl.get();

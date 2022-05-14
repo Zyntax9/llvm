@@ -19,6 +19,7 @@
 #include <detail/device_global_map_entry.hpp>
 #include <detail/spec_constant_impl.hpp>
 
+
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -50,9 +51,9 @@ namespace detail {
 static constexpr uint32_t inline ITTSpecConstId = 0xFF747469;
 
 class context_impl;
-using ContextImplPtr = std::shared_ptr<context_impl>;
+using ContextImplPtr = detail::shared_ptr<context_impl>;
 class device_impl;
-using DeviceImplPtr = std::shared_ptr<device_impl>;
+using DeviceImplPtr = detail::shared_ptr<device_impl>;
 class program_impl;
 // DeviceLibExt is shared between sycl runtime and sycl-post-link tool.
 // If any update is made here, need to sync with DeviceLibExt definition
@@ -330,7 +331,7 @@ private:
   // immutable afterwards.
   /// Access must be guarded by the m_KernelIDsMutex mutex.
   std::unordered_map<RTDeviceBinaryImage *,
-                     std::shared_ptr<std::vector<kernel_id>>>
+                     detail::shared_ptr<std::vector<kernel_id>>>
       m_BinImg2KernelIDs;
 
   /// Protects kernel ID cache.

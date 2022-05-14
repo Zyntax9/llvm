@@ -1025,8 +1025,8 @@ public:
 private:
   pi_native_handle getNative() const;
 
-  std::shared_ptr<detail::queue_impl> impl;
-  queue(std::shared_ptr<detail::queue_impl> impl) : impl(impl) {}
+  detail::shared_ptr<detail::queue_impl> impl;
+  queue(detail::shared_ptr<detail::queue_impl> impl) : impl(impl) {}
 
   template <class Obj>
   friend decltype(Obj::impl) detail::getSyclObjImpl(const Obj &SyclObject);
@@ -1226,7 +1226,7 @@ event submitAssertCapture(queue &Self, event &Event, queue *SecondaryQueue,
 namespace std {
 template <> struct hash<cl::sycl::queue> {
   size_t operator()(const cl::sycl::queue &Q) const {
-    return std::hash<std::shared_ptr<cl::sycl::detail::queue_impl>>()(
+    return std::hash<cl::sycl::detail::shared_ptr<cl::sycl::detail::queue_impl>>()(
         cl::sycl::detail::getSyclObjImpl(Q));
   }
 };

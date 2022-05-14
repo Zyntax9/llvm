@@ -36,8 +36,8 @@ __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl {
 namespace detail {
 
-using ContextImplPtr = std::shared_ptr<detail::context_impl>;
-using DeviceImplPtr = std::shared_ptr<detail::device_impl>;
+using ContextImplPtr = detail::shared_ptr<detail::context_impl>;
+using DeviceImplPtr = detail::shared_ptr<detail::device_impl>;
 
 /// Sets max number of queues supported by FPGA RT.
 static constexpr size_t MaxNumQueues = 256;
@@ -220,8 +220,8 @@ public:
   /// \return a SYCL event object, which corresponds to the queue the command
   /// group is being enqueued on.
   event submit(const std::function<void(handler &)> &CGF,
-               const std::shared_ptr<queue_impl> &Self,
-               const std::shared_ptr<queue_impl> &SecondQueue,
+               const detail::shared_ptr<queue_impl> &Self,
+               const detail::shared_ptr<queue_impl> &SecondQueue,
                const detail::code_location &Loc,
                const SubmitPostProcessF *PostProcess = nullptr) {
     try {
@@ -245,7 +245,7 @@ public:
   /// \param StoreAdditionalInfo makes additional info be stored in event_impl
   /// \return a SYCL event object for the submitted command group.
   event submit(const std::function<void(handler &)> &CGF,
-               const std::shared_ptr<queue_impl> &Self,
+               const detail::shared_ptr<queue_impl> &Self,
                const detail::code_location &Loc,
                const SubmitPostProcessF *PostProcess = nullptr) {
     return submit_impl(CGF, Self, Self, nullptr, Loc, PostProcess);
@@ -391,7 +391,7 @@ public:
   /// \param DepEvents is a vector of events that specifies the kernel
   /// dependencies.
   /// \return an event representing fill operation.
-  event memset(const std::shared_ptr<queue_impl> &Self, void *Ptr, int Value,
+  event memset(const detail::shared_ptr<queue_impl> &Self, void *Ptr, int Value,
                size_t Count, const std::vector<event> &DepEvents);
   /// Copies data from one memory region to another, both pointed by
   /// USM pointers.
@@ -403,7 +403,7 @@ public:
   /// \param DepEvents is a vector of events that specifies the kernel
   /// dependencies.
   /// \return an event representing copy operation.
-  event memcpy(const std::shared_ptr<queue_impl> &Self, void *Dest,
+  event memcpy(const detail::shared_ptr<queue_impl> &Self, void *Dest,
                const void *Src, size_t Count,
                const std::vector<event> &DepEvents);
   /// Provides additional information to the underlying runtime about how
@@ -416,7 +416,7 @@ public:
   /// \param DepEvents is a vector of events that specifies the kernel
   /// dependencies.
   /// \return an event representing advise operation.
-  event mem_advise(const std::shared_ptr<queue_impl> &Self, const void *Ptr,
+  event mem_advise(const detail::shared_ptr<queue_impl> &Self, const void *Ptr,
                    size_t Length, pi_mem_advice Advice,
                    const std::vector<event> &DepEvents);
 
@@ -487,9 +487,9 @@ private:
   /// \param Loc is the code location of the submit call (default argument)
   /// \return a SYCL event representing submitted command group.
   event submit_impl(const std::function<void(handler &)> &CGF,
-                    const std::shared_ptr<queue_impl> &Self,
-                    const std::shared_ptr<queue_impl> &PrimaryQueue,
-                    const std::shared_ptr<queue_impl> &SecondaryQueue,
+                    const detail::shared_ptr<queue_impl> &Self,
+                    const detail::shared_ptr<queue_impl> &PrimaryQueue,
+                    const detail::shared_ptr<queue_impl> &SecondaryQueue,
                     const detail::code_location &Loc,
                     const SubmitPostProcessF *PostProcess) {
     handler Handler(Self, PrimaryQueue, SecondaryQueue, MHostQueue);

@@ -21,7 +21,7 @@ inline constexpr auto DisablePostEnqueueCleanupName =
 
 class MockHandler : public sycl::handler {
 public:
-  MockHandler(std::shared_ptr<detail::queue_impl> Queue, bool IsHost)
+  MockHandler(sycl::detail::shared_ptr<detail::queue_impl> Queue, bool IsHost)
       : sycl::handler(Queue, IsHost) {}
 
   void setType(detail::CG::CGTYPE Type) {
@@ -45,7 +45,7 @@ public:
 
   std::unique_ptr<detail::CG> finalize() {
     auto CGH = static_cast<sycl::handler *>(this);
-    std::shared_ptr<detail::handler_impl> Impl = evictHandlerImpl();
+    sycl::detail::shared_ptr<detail::handler_impl> Impl = evictHandlerImpl();
     std::unique_ptr<detail::CG> CommandGroup;
     switch (CGH->MCGType) {
     case detail::CG::Kernel:

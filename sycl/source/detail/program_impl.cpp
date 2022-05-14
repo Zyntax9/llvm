@@ -16,6 +16,7 @@
 #include <detail/program_impl.hpp>
 #include <detail/spec_constant_impl.hpp>
 
+
 #include <algorithm>
 #include <fstream>
 #include <list>
@@ -44,7 +45,7 @@ program_impl::program_impl(ContextImplPtr Context,
 }
 
 program_impl::program_impl(
-    std::vector<std::shared_ptr<program_impl>> ProgramList,
+    std::vector<detail::shared_ptr<program_impl>> ProgramList,
     std::string LinkOptions, const property_list &PropList)
     : MState(program_state::linked), MPropList(PropList),
       MLinkOptions(LinkOptions), MBuildOptions(LinkOptions) {
@@ -332,7 +333,7 @@ bool program_impl::has_kernel(std::string KernelName,
 }
 
 kernel program_impl::get_kernel(std::string KernelName,
-                                std::shared_ptr<program_impl> PtrToSelf,
+                                detail::shared_ptr<program_impl> PtrToSelf,
                                 bool IsCreatedFromSource) const {
   throw_if_state_is(program_state::none);
   if (is_host()) {

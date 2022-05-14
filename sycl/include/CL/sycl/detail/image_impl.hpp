@@ -154,7 +154,7 @@ public:
     BaseT::handleHostData(HData, detail::getNextPowerOfTwo(MElementSize));
   }
 
-  image_impl(std::shared_ptr<void> &HData, image_channel_order Order,
+  image_impl(detail::shared_ptr<void> &HData, image_channel_order Order,
              image_channel_type Type, const range<Dimensions> &ImageRange,
              std::unique_ptr<SYCLMemObjAllocator> Allocator,
              const property_list &PropList = {})
@@ -168,7 +168,7 @@ public:
 
   /* Available only when: Dimensions > 1 */
   template <bool B = (Dimensions > 1)>
-  image_impl(std::shared_ptr<void> &HData, image_channel_order Order,
+  image_impl(detail::shared_ptr<void> &HData, image_channel_order Order,
              image_channel_type Type, const range<Dimensions> &ImageRange,
              const EnableIfPitchT<B> &Pitch,
              std::unique_ptr<SYCLMemObjAllocator> Allocator,

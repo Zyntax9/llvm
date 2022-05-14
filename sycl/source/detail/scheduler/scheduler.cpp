@@ -14,6 +14,7 @@
 #include <detail/scheduler/scheduler_helpers.hpp>
 #include <detail/stream_impl.hpp>
 
+
 #include <chrono>
 #include <cstdio>
 #include <memory>
@@ -221,7 +222,7 @@ void Scheduler::waitForEvent(EventImplPtr Event) {
 }
 
 static void deallocateStreams(
-    std::vector<std::shared_ptr<stream_impl>> &StreamsToDeallocate) {
+    std::vector<detail::shared_ptr<stream_impl>> &StreamsToDeallocate) {
   // Deallocate buffers for stream objects of the finished commands. Iterate in
   // reverse order because it is the order of commands execution.
   for (auto StreamImplPtr = StreamsToDeallocate.rbegin();
@@ -235,12 +236,12 @@ void Scheduler::cleanupFinishedCommands(EventImplPtr FinishedEvent) {
   // objects from these commands if any and deallocate buffers for these stream
   // objects, this is needed to guarantee that streamed data is printed and
   // resources are released.
-  std::vector<std::shared_ptr<stream_impl>> StreamsToDeallocate;
+  std::vector<detail::shared_ptr<stream_impl>> StreamsToDeallocate;
   // Similar to streams, we also collect the auxiliary resources used by the
   // commands. Cleanup will make sure the commands do not own the resources
   // anymore, so we just need them to survive the graph lock then they can die
   // as they go out of scope.
-  std::vector<std::shared_ptr<const void>> AuxResourcesToDeallocate;
+  std::vector<detail::shared_ptr<const void>> AuxResourcesToDeallocate;
   {
     // Avoiding deadlock situation, where one thread is in the process of
     // enqueueing (with a locked mutex) a currently blocked task that waits for
@@ -263,12 +264,12 @@ void Scheduler::removeMemoryObject(detail::SYCLMemObjI *MemObj) {
   // objects from these commands if any and deallocate buffers for these stream
   // objects, this is needed to guarantee that streamed data is printed and
   // resources are released.
-  std::vector<std::shared_ptr<stream_impl>> StreamsToDeallocate;
+  std::vector<detail::shared_ptr<stream_impl>> StreamsToDeallocate;
   // Similar to streams, we also collect the auxiliary resources used by the
   // commands. Cleanup will make sure the commands do not own the resources
   // anymore, so we just need them to survive the graph lock then they can die
   // as they go out of scope.
-  std::vector<std::shared_ptr<const void>> AuxResourcesToDeallocate;
+  std::vector<detail::shared_ptr<const void>> AuxResourcesToDeallocate;
 
   {
     MemObjRecord *Record = nullptr;

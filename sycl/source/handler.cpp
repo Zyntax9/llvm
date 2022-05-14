@@ -25,15 +25,16 @@
 #include <detail/scheduler/commands.hpp>
 #include <detail/scheduler/scheduler.hpp>
 
+
 __SYCL_INLINE_NAMESPACE(cl) {
 namespace sycl {
 
-handler::handler(std::shared_ptr<detail::queue_impl> Queue, bool IsHost)
+handler::handler(detail::shared_ptr<detail::queue_impl> Queue, bool IsHost)
     : handler(Queue, Queue, nullptr, IsHost) {}
 
-handler::handler(std::shared_ptr<detail::queue_impl> Queue,
-                 std::shared_ptr<detail::queue_impl> PrimaryQueue,
-                 std::shared_ptr<detail::queue_impl> SecondaryQueue,
+handler::handler(detail::shared_ptr<detail::queue_impl> Queue,
+                 detail::shared_ptr<detail::queue_impl> PrimaryQueue,
+                 detail::shared_ptr<detail::queue_impl> SecondaryQueue,
                  bool IsHost)
     : MQueue(std::move(Queue)), MIsHost(IsHost) {
   // Create extended members and insert handler_impl
@@ -50,9 +51,9 @@ handler::handler(std::shared_ptr<detail::queue_impl> Queue,
 }
 
 static detail::ExtendedMemberT &getHandlerImplMember(
-    std::vector<std::shared_ptr<const void>> &SharedPtrStorage) {
+    std::vector<detail::shared_ptr<const void>> &SharedPtrStorage) {
   assert(!SharedPtrStorage.empty());
-  std::shared_ptr<std::vector<detail::ExtendedMemberT>> ExtendedMembersVec =
+  detail::shared_ptr<std::vector<detail::ExtendedMemberT>> ExtendedMembersVec =
       detail::convertToExtendedMembers(SharedPtrStorage[0]);
   assert(ExtendedMembersVec->size() > 0);
   auto &HandlerImplMember = (*ExtendedMembersVec)[0];
@@ -61,7 +62,7 @@ static detail::ExtendedMemberT &getHandlerImplMember(
 }
 
 /// Gets the handler_impl at the start of the extended members.
-std::shared_ptr<detail::handler_impl> handler::getHandlerImpl() const {
+detail::shared_ptr<detail::handler_impl> handler::getHandlerImpl() const {
   std::lock_guard<std::mutex> Lock(
       detail::GlobalHandler::instance().getHandlerExtendedMembersMutex());
   return std::static_pointer_cast<detail::handler_impl>(
@@ -69,7 +70,7 @@ std::shared_ptr<detail::handler_impl> handler::getHandlerImpl() const {
 }
 
 /// Gets the handler_impl at the start of the extended members and removes it.
-std::shared_ptr<detail::handler_impl> handler::evictHandlerImpl() const {
+detail::shared_ptr<detail::handler_impl> handler::evictHandlerImpl() const {
   std::lock_guard<std::mutex> Lock(
       detail::GlobalHandler::instance().getHandlerExtendedMembersMutex());
   auto &HandlerImplMember = getHandlerImplMember(MSharedPtrStorage);
@@ -109,7 +110,7 @@ bool handler::isStateExplicitKernelBundle() const {
 // If there is no kernel_bundle created:
 // returns newly created kernel_bundle if Insert is true
 // returns shared_ptr(nullptr) if Insert is false
-std::shared_ptr<detail::kernel_bundle_impl>
+detail::shared_ptr<detail::kernel_bundle_impl>
 handler::getOrInsertHandlerKernelBundle(bool Insert) const {
 
   std::lock_guard<std::mutex> Lock(
@@ -117,10 +118,10 @@ handler::getOrInsertHandlerKernelBundle(bool Insert) const {
 
   assert(!MSharedPtrStorage.empty());
 
-  std::shared_ptr<std::vector<detail::ExtendedMemberT>> ExtendedMembersVec =
+  detail::shared_ptr<std::vector<detail::ExtendedMemberT>> ExtendedMembersVec =
       detail::convertToExtendedMembers(MSharedPtrStorage[0]);
   // Look for the kernel bundle in extended members
-  std::shared_ptr<detail::kernel_bundle_impl> KernelBundleImpPtr;
+  detail::shared_ptr<detail::kernel_bundle_impl> KernelBundleImpPtr;
   for (const detail::ExtendedMemberT &EMember : *ExtendedMembersVec)
     if (detail::ExtendedMembersType::HANDLER_KERNEL_BUNDLE == EMember.MType) {
       KernelBundleImpPtr =
@@ -146,13 +147,13 @@ handler::getOrInsertHandlerKernelBundle(bool Insert) const {
 // Sets kernel bundle to the provided one. Either replaces existing one or
 // create a new entry in the extended members vector.
 void handler::setHandlerKernelBundle(
-    const std::shared_ptr<detail::kernel_bundle_impl> &NewKernelBundleImpPtr) {
+    const detail::shared_ptr<detail::kernel_bundle_impl> &NewKernelBundleImpPtr) {
   assert(!MSharedPtrStorage.empty());
 
   std::lock_guard<std::mutex> Lock(
       detail::GlobalHandler::instance().getHandlerExtendedMembersMutex());
 
-  std::shared_ptr<std::vector<detail::ExtendedMemberT>> ExendedMembersVec =
+  detail::shared_ptr<std::vector<detail::ExtendedMemberT>> ExendedMembersVec =
       detail::convertToExtendedMembers(MSharedPtrStorage[0]);
 
   // Look for kernel bundle in extended members and overwrite it.
@@ -177,7 +178,7 @@ event handler::finalize() {
     return MLastEvent;
   MIsFinalized = true;
 
-  std::shared_ptr<detail::kernel_bundle_impl> KernelBundleImpPtr = nullptr;
+  detail::shared_ptr<detail::kernel_bundle_impl> KernelBundleImpPtr = nullptr;
   // Kernel_bundles could not be used before CGType version 1
   if (getCGTypeVersion(MCGType) >
       static_cast<unsigned int>(detail::CG::CG_VERSION::V0)) {
@@ -299,7 +300,7 @@ event handler::finalize() {
 
   // Evict handler_impl from extended members to make sure the command group
   // does not keep it alive.
-  std::shared_ptr<detail::handler_impl> Impl = evictHandlerImpl();
+  detail::shared_ptr<detail::handler_impl> Impl = evictHandlerImpl();
 
   std::unique_ptr<detail::CG> CommandGroup;
   switch (type) {
@@ -403,7 +404,7 @@ event handler::finalize() {
   return MLastEvent;
 }
 
-void handler::addReduction(const std::shared_ptr<const void> &ReduObj) {
+void handler::addReduction(const detail::shared_ptr<const void> &ReduObj) {
   getHandlerImpl()->MAuxiliaryResources.push_back(ReduObj);
 }
 
@@ -762,7 +763,7 @@ void handler::mem_advise(const void *Ptr, size_t Count, int Advice) {
   std::lock_guard<std::mutex> Lock(
       detail::GlobalHandler::instance().getHandlerExtendedMembersMutex());
 
-  std::shared_ptr<std::vector<detail::ExtendedMemberT>> ExtendedMembersVec =
+  detail::shared_ptr<std::vector<detail::ExtendedMemberT>> ExtendedMembersVec =
       detail::convertToExtendedMembers(MSharedPtrStorage[0]);
 
   detail::ExtendedMemberT EMember = {
@@ -775,7 +776,7 @@ void handler::mem_advise(const void *Ptr, size_t Count, int Advice) {
 void handler::use_kernel_bundle(
     const kernel_bundle<bundle_state::executable> &ExecBundle) {
 
-  std::shared_ptr<detail::queue_impl> PrimaryQueue =
+  detail::shared_ptr<detail::queue_impl> PrimaryQueue =
       getHandlerImpl()->MSubmissionPrimaryQueue;
   if (PrimaryQueue->get_context() != ExecBundle.get_context())
     throw sycl::exception(
@@ -783,7 +784,7 @@ void handler::use_kernel_bundle(
         "Context associated with the primary queue is different from the "
         "context associated with the kernel bundle");
 
-  std::shared_ptr<detail::queue_impl> SecondaryQueue =
+  detail::shared_ptr<detail::queue_impl> SecondaryQueue =
       getHandlerImpl()->MSubmissionSecondaryQueue;
   if (SecondaryQueue &&
       SecondaryQueue->get_context() != ExecBundle.get_context())
