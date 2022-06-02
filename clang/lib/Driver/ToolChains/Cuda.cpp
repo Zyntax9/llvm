@@ -67,6 +67,10 @@ CudaVersion getCudaVersion(uint32_t raw_version) {
     return CudaVersion::CUDA_114;
   if (raw_version < 11060)
     return CudaVersion::CUDA_115;
+  if (raw_version < 11070)
+    return CudaVersion::CUDA_116;
+  if (raw_version < 11080)
+    return CudaVersion::CUDA_117;
   return CudaVersion::NEW;
 }
 
@@ -128,8 +132,8 @@ CudaInstallationDetector::CudaInstallationDetector(
 
   // In decreasing order so we prefer newer versions to older versions.
   std::initializer_list<const char *> Versions = {
-      "11.4", "11.3", "11.2", "11.1", "10.2", "10.1", "10.0",
-      "9.2",  "9.1",  "9.0",  "8.0",  "7.5",  "7.0"};
+      "11.7", "11.6", "11.5", "11.4", "11.3", "11.2", "11.1", "10.2",
+      "10.1", "10.0", "9.2",  "9.1",  "9.0",  "8.0",  "7.5",  "7.0"};
   auto &FS = D.getVFS();
 
   if (Args.hasArg(clang::driver::options::OPT_cuda_path_EQ)) {
@@ -671,6 +675,8 @@ void NVPTX::getNVPTXTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   case CudaVersion::CUDA_##CUDA_VER:                                           \
     PtxFeature = "+ptx" #PTX_VER;                                              \
     break;
+    CASE_CUDA_VERSION(117, 77);
+    CASE_CUDA_VERSION(116, 76);
     CASE_CUDA_VERSION(115, 75);
     CASE_CUDA_VERSION(114, 74);
     CASE_CUDA_VERSION(113, 73);
