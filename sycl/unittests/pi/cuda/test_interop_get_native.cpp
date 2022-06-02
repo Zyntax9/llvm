@@ -78,17 +78,6 @@ TEST_P(CudaInteropGetNativeTests, interopTaskGetMem) {
   });
 }
 
-TEST_P(CudaInteropGetNativeTests, interopTaskGetQueue) {
-  CUstream cudaStream = get_native<backend::ext_oneapi_cuda>(*syclQueue_);
-  syclQueue_->submit([&](handler &cgh) {
-    cgh.host_task([=](interop_handle ih) {
-      CUstream cudaInteropStream =
-          ih.get_native_queue<backend::ext_oneapi_cuda>();
-      ASSERT_EQ(cudaInteropStream, cudaStream);
-    });
-  });
-}
-
 TEST_P(CudaInteropGetNativeTests, hostTaskGetNativeMem) {
   buffer<int, 1> syclBuffer(range<1>{1});
   syclQueue_->submit([&](handler &cgh) {
@@ -105,17 +94,6 @@ TEST_P(CudaInteropGetNativeTests, hostTaskGetNativeMem) {
                 cuMemGetAddressRange(&cudaPtrBase, &cudaPtrSize, cudaPtr));
       ASSERT_EQ(CUDA_SUCCESS, cuCtxPopCurrent(nullptr));
       ASSERT_EQ(sizeof(int), cudaPtrSize);
-    });
-  });
-}
-
-TEST_P(CudaInteropGetNativeTests, hostTaskGetNativeQueue) {
-  CUstream cudaStream = get_native<backend::ext_oneapi_cuda>(*syclQueue_);
-  syclQueue_->submit([&](handler &cgh) {
-    cgh.host_task([=](interop_handle ih) {
-      CUstream cudaInteropStream =
-          ih.get_native_queue<backend::ext_oneapi_cuda>();
-      ASSERT_EQ(cudaInteropStream, cudaStream);
     });
   });
 }
