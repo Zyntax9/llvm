@@ -7,12 +7,15 @@ include(LLVMCheckLinkerFlag)
 # file as ${ARG_TARGET_NAME}.pdb in bin folder.
 # NOTE: LLD does not currently support /PDBSTRIPPED so the PDB file is optional.
 macro(add_stripped_pdb ARG_TARGET_NAME)
-  llvm_check_linker_flag(CXX "/PDBSTRIPPED:${ARG_TARGET_NAME}.stripped.pdb"
+  get_filename_component(FULL_STRIPPED_PDB_FILE_PATH
+                         "${ARG_TARGET_NAME}.stripped.pdb" ABSOLUTE
+                         BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+  llvm_check_linker_flag(CXX "/PDBSTRIPPED:${FULL_STRIPPED_PDB_FILE_PATH}"
                          LINKER_SUPPORTS_PDBSTRIPPED)
   if(LINKER_SUPPORTS_PDBSTRIPPED)
     target_link_options(${ARG_TARGET_NAME}
-                        PRIVATE "/PDBSTRIPPED:${ARG_TARGET_NAME}.stripped.pdb")
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${ARG_TARGET_NAME}.stripped.pdb"
+                        PRIVATE "/PDBSTRIPPED:${FULL_STRIPPED_PDB_FILE_PATH}")
+    install(FILES "${FULL_STRIPPED_PDB_FILE_PATH}"
             DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
             RENAME "${ARG_TARGET_NAME}.pdb"
             COMPONENT ${ARG_TARGET_NAME}
