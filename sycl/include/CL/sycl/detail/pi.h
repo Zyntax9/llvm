@@ -196,11 +196,12 @@ typedef enum {
 typedef enum : pi_uint64 {
   PI_DEVICE_TYPE_DEFAULT =
       (1 << 0), ///< The default device available in the PI plugin.
-  PI_DEVICE_TYPE_ALL = 0xFFFFFFFF, ///< All devices available in the PI plugin.
-  PI_DEVICE_TYPE_CPU = (1 << 1),   ///< A PI device that is the host processor.
-  PI_DEVICE_TYPE_GPU = (1 << 2),   ///< A PI device that is a GPU.
-  PI_DEVICE_TYPE_ACC = (1 << 3)    ///< A PI device that is a
-                                   ///< dedicated accelerator.
+  PI_DEVICE_TYPE_ALL = 0xFFFFFFFF,  ///< All devices available in the PI plugin.
+  PI_DEVICE_TYPE_CPU = (1 << 1),    ///< A PI device that is the host processor.
+  PI_DEVICE_TYPE_GPU = (1 << 2),    ///< A PI device that is a GPU.
+  PI_DEVICE_TYPE_ACC = (1 << 3),    ///< A PI device that is a
+                                    ///< dedicated accelerator.
+  PI_DEVICE_TYPE_CUSTOM = (1 << 4)  ///< A PI device that is a custom device.
 } _pi_device_type;
 
 typedef enum {
@@ -649,6 +650,8 @@ using pi_profiling_info = _pi_profiling_info;
 using pi_device_partition_property = intptr_t;
 static constexpr pi_device_partition_property PI_DEVICE_PARTITION_EQUALLY =
     0x1086;
+static constexpr pi_device_partition_property PI_DEVICE_PARTITION_BY_COUNTS =
+    0x1087;
 static constexpr pi_device_partition_property
     PI_DEVICE_PARTITION_BY_AFFINITY_DOMAIN = 0x1088;
 
@@ -656,6 +659,14 @@ static constexpr pi_device_partition_property
 using pi_device_affinity_domain = pi_bitfield;
 static constexpr pi_device_affinity_domain PI_DEVICE_AFFINITY_DOMAIN_NUMA =
     (1 << 0);
+static constexpr pi_device_affinity_domain PI_DEVICE_AFFINITY_DOMAIN_L4_CACHE =
+    (1 << 1);
+static constexpr pi_device_affinity_domain PI_DEVICE_AFFINITY_DOMAIN_L3_CACHE =
+    (1 << 2);
+static constexpr pi_device_affinity_domain PI_DEVICE_AFFINITY_DOMAIN_L2_CACHE =
+    (1 << 3);
+static constexpr pi_device_affinity_domain PI_DEVICE_AFFINITY_DOMAIN_L1_CACHE =
+    (1 << 4);
 static constexpr pi_device_affinity_domain
     PI_DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE = (1 << 5);
 
