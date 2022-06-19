@@ -201,6 +201,14 @@ template <typename propertiesT>
 inline constexpr bool is_property_list_v = is_property_list<propertiesT>::value;
 #endif
 
+namespace detail {
+// Helper for default properties when deduction guides are not enabled
+using empty_properties_t = properties<std::tuple<>>;
+
+// Helper for specifying properties type by property types.
+template <typename... PropertyValueTs>
+using properties_t = properties<std::tuple<PropertyValueTs...>>;
+} // namespace detail
 } // namespace experimental
 } // namespace oneapi
 } // namespace ext
