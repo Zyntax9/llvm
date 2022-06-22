@@ -74,7 +74,7 @@ inline device make_device<backend::ext_oneapi_cuda>(
 }
 
 template <>
-backend_return_t<backend::ext_oneapi_cuda, device>
+inline backend_return_t<backend::ext_oneapi_cuda, device>
 get_native<backend::ext_oneapi_cuda, device>(const device &Obj) {
   // TODO use SYCL 2020 exception when implemented
   if (Obj.get_backend() != backend::ext_oneapi_cuda) {

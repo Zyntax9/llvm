@@ -18,6 +18,7 @@
  * pipe.
  */
 
+#ifndef _WIN32
 #define SYCL_FALLBACK_ASSERT 1
 // Enable use of interop kernel c-tor
 #define __SYCL_INTERNAL_API
@@ -30,10 +31,8 @@
 
 #include <gtest/gtest.h>
 
-#ifndef _WIN32
 #include <sys/ioctl.h>
 #include <unistd.h>
-#endif // _WIN32
 
 class TestKernel;
 
@@ -430,7 +429,6 @@ static void setupMockForInterop(sycl::unittest::PiMock &Mock,
       TestInteropKernel::redefinedProgramGetBuildInfo);
 }
 
-#ifndef _WIN32
 void ChildProcess(int StdErrFD) {
   static constexpr int StandardStdErrFD = 2;
   if (dup2(StdErrFD, StandardStdErrFD) < 0) {
@@ -511,7 +509,6 @@ void ParentProcess(int ChildPID, int ChildStdErrFD) {
   EXPECT_EQ(SigNum, SIGABRT);
   EXPECT_NE(BufStr.find(StandardMessage), std::string::npos);
 }
-#endif // _WIN32
 
 TEST(Assert, TestPositive) {
   // Preliminary checks
@@ -533,7 +530,6 @@ TEST(Assert, TestPositive) {
     }
   }
 
-#ifndef _WIN32
   static constexpr int ReadFDIdx = 0;
   static constexpr int WriteFDIdx = 1;
   int PipeFD[2];
@@ -554,7 +550,6 @@ TEST(Assert, TestPositive) {
     ChildProcess(PipeFD[WriteFDIdx]);
     close(PipeFD[WriteFDIdx]);
   }
-#endif // _WIN32
 }
 
 TEST(Assert, TestAssertServiceKernelHidden) {
@@ -703,3 +698,5 @@ TEST(Assert, TestKernelFromSourceNegative) {
   EXPECT_EQ(TestInteropKernel::KernelLaunchCounter,
             KernelLaunchCounterBase + 1);
 }
+
+#endif // _WIN32

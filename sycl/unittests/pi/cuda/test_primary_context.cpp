@@ -12,6 +12,9 @@
 
 #include "TestGetPlatforms.hpp"
 #include <pi_cuda.hpp>
+
+#define SYCL_EXT_ONEAPI_BACKEND_CUDA_EXPERIMENTAL 1
+#include <sycl/ext/oneapi/experimental/backend/cuda.hpp>
 #include <sycl/sycl.hpp>
 
 #include <iostream>
@@ -41,12 +44,14 @@ TEST_P(CudaPrimaryContextTests, piSingleContext) {
       {sycl::ext::oneapi::cuda::property::context::use_primary_context{}});
 
   CUdevice CudaDevice = get_native<backend::ext_oneapi_cuda>(deviceA_);
-  CUcontext CudaContext = get_native<backend::ext_oneapi_cuda>(Context);
+  std::vector<CUcontext> CudaContexts =
+      get_native<backend::ext_oneapi_cuda>(Context);
 
   CUcontext PrimaryCudaContext;
   cuDevicePrimaryCtxRetain(&PrimaryCudaContext, CudaDevice);
 
-  ASSERT_EQ(CudaContext, PrimaryCudaContext);
+  ASSERT_EQ(CudaContexts.size(), 1);
+  ASSERT_EQ(CudaContexts[0], PrimaryCudaContext);
 
   cuDevicePrimaryCtxRelease(CudaDevice);
 }
@@ -60,10 +65,14 @@ TEST_P(CudaPrimaryContextTests, piMultiContextSingleDevice) {
       deviceA_, async_handler{},
       {sycl::ext::oneapi::cuda::property::context::use_primary_context{}});
 
-  CUcontext CudaContextA = get_native<backend::ext_oneapi_cuda>(ContextA);
-  CUcontext CudaContextB = get_native<backend::ext_oneapi_cuda>(ContextB);
+  std::vector<CUcontext> CudaContextsA =
+      get_native<backend::ext_oneapi_cuda>(ContextA);
+  std::vector<CUcontext> CudaContextsB =
+      get_native<backend::ext_oneapi_cuda>(ContextB);
 
-  ASSERT_EQ(CudaContextA, CudaContextB);
+  ASSERT_EQ(CudaContextsA.size(), 1);
+  ASSERT_EQ(CudaContextsB.size(), 1);
+  ASSERT_EQ(CudaContextsA[0], CudaContextsB[0]);
 }
 
 TEST_P(CudaPrimaryContextTests, piMultiContextMultiDevice) {
@@ -83,10 +92,14 @@ TEST_P(CudaPrimaryContextTests, piMultiContextMultiDevice) {
       deviceB_, async_handler{},
       {sycl::ext::oneapi::cuda::property::context::use_primary_context{}});
 
-  CUcontext CudaContextA = get_native<backend::ext_oneapi_cuda>(ContextA);
-  CUcontext CudaContextB = get_native<backend::ext_oneapi_cuda>(ContextB);
+  std::vector<CUcontext> CudaContextsA =
+      get_native<backend::ext_oneapi_cuda>(ContextA);
+  std::vector<CUcontext> CudaContextsB =
+      get_native<backend::ext_oneapi_cuda>(ContextB);
 
-  ASSERT_NE(CudaContextA, CudaContextB);
+  ASSERT_EQ(CudaContextsA.size(), 1);
+  ASSERT_EQ(CudaContextsB.size(), 1);
+  ASSERT_EQ(CudaContextsA[0], CudaContextsB[0]);
 }
 
 INSTANTIATE_TEST_SUITE_P(

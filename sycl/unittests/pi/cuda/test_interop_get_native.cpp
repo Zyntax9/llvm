@@ -11,6 +11,9 @@
 #include <cuda.h>
 
 #include "TestGetPlatforms.hpp"
+
+#define SYCL_EXT_ONEAPI_BACKEND_CUDA_EXPERIMENTAL 1
+#include <sycl/ext/oneapi/experimental/backend/cuda.hpp>
 #include <sycl/sycl.hpp>
 
 #include <iostream>
@@ -40,9 +43,9 @@ TEST_P(CudaInteropGetNativeTests, getNativeDevice) {
 }
 
 TEST_P(CudaInteropGetNativeTests, getNativeContext) {
-  CUcontext cudaContext =
+  std::vector<CUcontext> cudaContexts =
       get_native<backend::ext_oneapi_cuda>(syclQueue_->get_context());
-  ASSERT_NE(cudaContext, nullptr);
+  ASSERT_FALSE(cudaContexts.empty());
 }
 
 TEST_P(CudaInteropGetNativeTests, getNativeQueue) {
@@ -53,9 +56,9 @@ TEST_P(CudaInteropGetNativeTests, getNativeQueue) {
   CUresult result = cuStreamGetCtx(cudaStream, &streamContext);
   ASSERT_EQ(result, CUDA_SUCCESS);
 
-  CUcontext cudaContext =
+  std::vector<CUcontext> cudaContexts =
       get_native<backend::ext_oneapi_cuda>(syclQueue_->get_context());
-  ASSERT_EQ(streamContext, cudaContext);
+  ASSERT_EQ(streamContext, cudaContexts[0]);
 }
 
 TEST_P(CudaInteropGetNativeTests, interopTaskGetMem) {
@@ -63,15 +66,16 @@ TEST_P(CudaInteropGetNativeTests, interopTaskGetMem) {
   syclQueue_->submit([&](handler &cgh) {
     auto syclAccessor = syclBuffer.get_access<access::mode::read>(cgh);
     cgh.host_task([=](interop_handle ih) {
-      CUdeviceptr cudaPtr =
+      int *cudaPtr =
           ih.get_native_mem<backend::ext_oneapi_cuda>(syclAccessor);
       CUdeviceptr cudaPtrBase;
       size_t cudaPtrSize = 0;
-      CUcontext cudaContext =
+      std::vector<CUcontext> cudaContexts =
           get_native<backend::ext_oneapi_cuda>(syclQueue_->get_context());
-      ASSERT_EQ(CUDA_SUCCESS, cuCtxPushCurrent(cudaContext));
+      ASSERT_EQ(CUDA_SUCCESS, cuCtxPushCurrent(cudaContexts[0]));
       ASSERT_EQ(CUDA_SUCCESS,
-                cuMemGetAddressRange(&cudaPtrBase, &cudaPtrSize, cudaPtr));
+                cuMemGetAddressRange(&cudaPtrBase, &cudaPtrSize,
+                                     reinterpret_cast<CUdeviceptr>(cudaPtr)));
       ASSERT_EQ(CUDA_SUCCESS, cuCtxPopCurrent(nullptr));
       ASSERT_EQ(sizeof(int), cudaPtrSize);
     });
@@ -83,15 +87,16 @@ TEST_P(CudaInteropGetNativeTests, hostTaskGetNativeMem) {
   syclQueue_->submit([&](handler &cgh) {
     auto syclAccessor = syclBuffer.get_access<access::mode::read>(cgh);
     cgh.host_task([=](interop_handle ih) {
-      CUdeviceptr cudaPtr =
+      int *cudaPtr =
           ih.get_native_mem<backend::ext_oneapi_cuda>(syclAccessor);
       CUdeviceptr cudaPtrBase;
       size_t cudaPtrSize = 0;
-      CUcontext cudaContext =
+      std::vector<CUcontext> cudaContexts =
           get_native<backend::ext_oneapi_cuda>(syclQueue_->get_context());
-      ASSERT_EQ(CUDA_SUCCESS, cuCtxPushCurrent(cudaContext));
+      ASSERT_EQ(CUDA_SUCCESS, cuCtxPushCurrent(cudaContexts[0]));
       ASSERT_EQ(CUDA_SUCCESS,
-                cuMemGetAddressRange(&cudaPtrBase, &cudaPtrSize, cudaPtr));
+                cuMemGetAddressRange(&cudaPtrBase, &cudaPtrSize,
+                                     reinterpret_cast<CUdeviceptr>(cudaPtr)));
       ASSERT_EQ(CUDA_SUCCESS, cuCtxPopCurrent(nullptr));
       ASSERT_EQ(sizeof(int), cudaPtrSize);
     });
@@ -99,13 +104,13 @@ TEST_P(CudaInteropGetNativeTests, hostTaskGetNativeMem) {
 }
 
 TEST_P(CudaInteropGetNativeTests, hostTaskGetNativeContext) {
-  CUcontext cudaContext =
+  std::vector<CUcontext> cudaContexts =
       get_native<backend::ext_oneapi_cuda>(syclQueue_->get_context());
   syclQueue_->submit([&](handler &cgh) {
     cgh.host_task([=](interop_handle ih) {
-      CUcontext cudaInteropContext =
+      std::vector<CUcontext> cudaInteropContexts =
           ih.get_native_context<backend::ext_oneapi_cuda>();
-      ASSERT_EQ(cudaInteropContext, cudaContext);
+      ASSERT_EQ(cudaInteropContexts[0], cudaContexts[0]);
     });
   });
 }
