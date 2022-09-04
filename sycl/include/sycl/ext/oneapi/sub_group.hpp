@@ -26,7 +26,9 @@
 
 namespace sycl {
 __SYCL_INLINE_VER_NAMESPACE(_V1) {
-template <typename T, access::address_space Space> class multi_ptr;
+template <typename T, access::address_space Space,
+          access::decorated DecorateAddress>
+class multi_ptr;
 
 namespace detail {
 
@@ -47,8 +49,9 @@ using AcceptableForLocalLoadStore =
                   Space == access::address_space::local_space>;
 
 #ifdef __SYCL_DEVICE_ONLY__
-template <typename T, access::address_space Space>
-T load(const multi_ptr<T, Space> src) {
+template <typename T, access::address_space Space,
+          access::decorated DecorateAddress>
+T load(const multi_ptr<T, Space, DecorateAddress> src) {
   using BlockT = SelectBlockT<T>;
   using PtrT =
       sycl::detail::ConvertToOpenCLType_t<const multi_ptr<BlockT, Space>>;
@@ -59,12 +62,13 @@ T load(const multi_ptr<T, Space> src) {
   return sycl::bit_cast<T>(Ret);
 }
 
-template <int N, typename T, access::address_space Space>
-vec<T, N> load(const multi_ptr<T, Space> src) {
+template <int N, typename T, access::address_space Space,
+          access::decorated DecorateAddress>
+vec<T, N> load(const multi_ptr<T, Space, DecorateAddress> src) {
   using BlockT = SelectBlockT<T>;
   using VecT = sycl::detail::ConvertToOpenCLType_t<vec<BlockT, N>>;
-  using PtrT =
-      sycl::detail::ConvertToOpenCLType_t<const multi_ptr<BlockT, Space>>;
+  using PtrT = sycl::detail::ConvertToOpenCLType_t<
+      const multi_ptr<BlockT, Space, DecorateAddress>>;
 
   VecT Ret =
       __spirv_SubgroupBlockReadINTEL<VecT>(reinterpret_cast<PtrT>(src.get()));
@@ -72,21 +76,24 @@ vec<T, N> load(const multi_ptr<T, Space> src) {
   return sycl::bit_cast<typename vec<T, N>::vector_t>(Ret);
 }
 
-template <typename T, access::address_space Space>
-void store(multi_ptr<T, Space> dst, const T &x) {
+template <typename T, access::address_space Space,
+          access::decorated DecorateAddress>
+void store(multi_ptr<T, Space, DecorateAddress> dst, const T &x) {
   using BlockT = SelectBlockT<T>;
-  using PtrT = sycl::detail::ConvertToOpenCLType_t<multi_ptr<BlockT, Space>>;
+  using PtrT = sycl::detail::ConvertToOpenCLType_t<
+      multi_ptr<BlockT, Space, DecorateAddress>>;
 
   __spirv_SubgroupBlockWriteINTEL(reinterpret_cast<PtrT>(dst.get()),
                                   sycl::bit_cast<BlockT>(x));
 }
 
-template <int N, typename T, access::address_space Space>
-void store(multi_ptr<T, Space> dst, const vec<T, N> &x) {
+template <int N, typename T, access::address_space Space,
+          access::decorated DecorateAddress>
+void store(multi_ptr<T, Space, DecorateAddress> dst, const vec<T, N> &x) {
   using BlockT = SelectBlockT<T>;
   using VecT = sycl::detail::ConvertToOpenCLType_t<vec<BlockT, N>>;
-  using PtrT =
-      sycl::detail::ConvertToOpenCLType_t<const multi_ptr<BlockT, Space>>;
+  using PtrT = sycl::detail::ConvertToOpenCLType_t<
+      const multi_ptr<BlockT, Space, DecorateAddress>>;
 
   __spirv_SubgroupBlockWriteINTEL(reinterpret_cast<PtrT>(dst.get()),
                                   sycl::bit_cast<VecT>(x));
@@ -237,18 +244,17 @@ struct sub_group {
   // Method for decorated pointer
   template <typename CVT, typename T = std::remove_cv_t<CVT>>
   detail::enable_if_t<
-      !std::is_same<typename detail::remove_AS<T>::type, T>::value, T>
+      !std::is_same<remove_decoration_t<T>, T>::value, T>
   load(CVT *cv_src) const {
     T *src = const_cast<T *>(cv_src);
-    return load(sycl::multi_ptr<typename detail::remove_AS<T>::type,
+    return load(sycl::multi_ptr<remove_decoration_t<T>,
                                 sycl::detail::deduce_AS<T>::value>(
-        (typename detail::remove_AS<T>::type *)src));
+        (remove_decoration_t<T> *)src));
   }
 
   // Method for raw pointer
   template <typename CVT, typename T = std::remove_cv_t<CVT>>
-  detail::enable_if_t<
-      std::is_same<typename detail::remove_AS<T>::type, T>::value, T>
+  detail::enable_if_t<std::is_same<remove_decoration_t<T>, T>::value, T>
   load(CVT *cv_src) const {
     T *src = const_cast<T *>(cv_src);
 
@@ -410,19 +416,18 @@ struct sub_group {
   // Method for decorated pointer
   template <typename T>
   detail::enable_if_t<
-      !std::is_same<typename detail::remove_AS<T>::type, T>::value>
-  store(T *dst, const typename detail::remove_AS<T>::type &x) const {
-    store(sycl::multi_ptr<typename detail::remove_AS<T>::type,
+      !std::is_same<remove_decoration_t<T>, T>::value>
+  store(T *dst, const remove_decoration_t<T> &x) const {
+    store(sycl::multi_ptr<remove_decoration_t<T>,
                           sycl::detail::deduce_AS<T>::value>(
-              (typename detail::remove_AS<T>::type *)dst),
+              (remove_decoration_t<T> *)dst),
           x);
   }
 
   // Method for raw pointer
   template <typename T>
-  detail::enable_if_t<
-      std::is_same<typename detail::remove_AS<T>::type, T>::value>
-  store(T *dst, const typename detail::remove_AS<T>::type &x) const {
+  detail::enable_if_t<std::is_same<remove_decoration_t<T>, T>::value>
+  store(T *dst, const remove_decoration_t<T> &x) const {
 
 #ifdef __NVPTX__
     dst[get_local_id()[0]] = x;
@@ -453,10 +458,11 @@ struct sub_group {
   }
 #endif //__SYCL_DEVICE_ONLY__
 
-  template <typename T, access::address_space Space>
+  template <typename T, access::address_space Space,
+            access::decorated DecorateAddress>
   sycl::detail::enable_if_t<
       sycl::detail::sub_group::AcceptableForGlobalLoadStore<T, Space>::value>
-  store(multi_ptr<T, Space> dst, const T &x) const {
+  store(multi_ptr<T, Space, DecorateAddress> dst, const T &x) const {
 #ifdef __SYCL_DEVICE_ONLY__
 #ifdef __NVPTX__
     dst.get()[get_local_id()[0]] = x;
@@ -471,10 +477,11 @@ struct sub_group {
 #endif
   }
 
-  template <typename T, access::address_space Space>
+  template <typename T, access::address_space Space,
+            access::decorated DecorateAddress>
   sycl::detail::enable_if_t<
       sycl::detail::sub_group::AcceptableForLocalLoadStore<T, Space>::value>
-  store(multi_ptr<T, Space> dst, const T &x) const {
+  store(multi_ptr<T, Space, DecorateAddress> dst, const T &x) const {
 #ifdef __SYCL_DEVICE_ONLY__
     dst.get()[get_local_id()[0]] = x;
 #else
@@ -487,55 +494,63 @@ struct sub_group {
 
 #ifdef __SYCL_DEVICE_ONLY__
 #ifdef __NVPTX__
-  template <int N, typename T, access::address_space Space>
+  template <int N, typename T, access::address_space Space,
+            access::decorated DecorateAddress>
   sycl::detail::enable_if_t<
       sycl::detail::sub_group::AcceptableForGlobalLoadStore<T, Space>::value>
-  store(multi_ptr<T, Space> dst, const vec<T, N> &x) const {
+  store(multi_ptr<T, Space, DecorateAddress> dst, const vec<T, N> &x) const {
     for (int i = 0; i < N; ++i) {
       *(dst.get() + i * get_max_local_range()[0] + get_local_id()[0]) = x[i];
     }
   }
 #else // __NVPTX__
-  template <int N, typename T, access::address_space Space>
+  template <int N, typename T, access::address_space Space,
+            access::decorated DecorateAddress>
   sycl::detail::enable_if_t<
       sycl::detail::sub_group::AcceptableForGlobalLoadStore<T, Space>::value &&
       N != 1 && N != 3 && N != 16>
-  store(multi_ptr<T, Space> dst, const vec<T, N> &x) const {
+  store(multi_ptr<T, Space, DecorateAddress> dst, const vec<T, N> &x) const {
     sycl::detail::sub_group::store(dst, x);
   }
 
-  template <int N, typename T, access::address_space Space>
+  template <int N, typename T, access::address_space Space,
+            access::decorated DecorateAddress>
   sycl::detail::enable_if_t<
       sycl::detail::sub_group::AcceptableForGlobalLoadStore<T, Space>::value &&
       N == 1>
-  store(multi_ptr<T, Space> dst, const vec<T, 1> &x) const {
+  store(multi_ptr<T, Space, DecorateAddress> dst, const vec<T, 1> &x) const {
     sycl::detail::sub_group::store(dst, x);
   }
 
-  template <int N, typename T, access::address_space Space>
+  template <int N, typename T, access::address_space Space,
+            access::decorated DecorateAddress>
   sycl::detail::enable_if_t<
       sycl::detail::sub_group::AcceptableForGlobalLoadStore<T, Space>::value &&
       N == 3>
-  store(multi_ptr<T, Space> dst, const vec<T, 3> &x) const {
-    store<1, T, Space>(dst, x.s0());
-    store<2, T, Space>(dst + get_max_local_range()[0], {x.s1(), x.s2()});
+  store(multi_ptr<T, Space, DecorateAddress> dst, const vec<T, 3> &x) const {
+    store<1, T, Space, DecorateAddress>(dst, x.s0());
+    store<2, T, Space, DecorateAddress>(dst + get_max_local_range()[0],
+                                        {x.s1(), x.s2()});
   }
 
-  template <int N, typename T, access::address_space Space>
+  template <int N, typename T, access::address_space Space,
+            access::decorated DecorateAddress>
   sycl::detail::enable_if_t<
       sycl::detail::sub_group::AcceptableForGlobalLoadStore<T, Space>::value &&
       N == 16>
-  store(multi_ptr<T, Space> dst, const vec<T, 16> &x) const {
-    store<8, T, Space>(dst, x.lo());
-    store<8, T, Space>(dst + 8 * get_max_local_range()[0], x.hi());
+  store(multi_ptr<T, Space, DecorateAddress> dst, const vec<T, 16> &x) const {
+    store<8, T, Space, DecorateAddress>(dst, x.lo());
+    store<8, T, Space, DecorateAddress>(dst + 8 * get_max_local_range()[0],
+                                        x.hi());
   }
 
 #endif // __NVPTX__
 #else  // __SYCL_DEVICE_ONLY__
-  template <int N, typename T, access::address_space Space>
+  template <int N, typename T, access::address_space Space,
+            access::decorated DecorateAddress>
   sycl::detail::enable_if_t<
       sycl::detail::sub_group::AcceptableForGlobalLoadStore<T, Space>::value>
-  store(multi_ptr<T, Space> dst, const vec<T, N> &x) const {
+  store(multi_ptr<T, Space, DecorateAddress> dst, const vec<T, N> &x) const {
     (void)dst;
     (void)x;
     throw runtime_error("Sub-groups are not supported on host device.",
@@ -543,10 +558,11 @@ struct sub_group {
   }
 #endif // __SYCL_DEVICE_ONLY__
 
-  template <int N, typename T, access::address_space Space>
+  template <int N, typename T, access::address_space Space,
+            access::decorated DecorateAddress>
   sycl::detail::enable_if_t<
       sycl::detail::sub_group::AcceptableForLocalLoadStore<T, Space>::value>
-  store(multi_ptr<T, Space> dst, const vec<T, N> &x) const {
+  store(multi_ptr<T, Space, DecorateAddress> dst, const vec<T, N> &x) const {
 #ifdef __SYCL_DEVICE_ONLY__
     for (int i = 0; i < N; ++i) {
       *(dst.get() + i * get_max_local_range()[0] + get_local_id()[0]) = x[i];

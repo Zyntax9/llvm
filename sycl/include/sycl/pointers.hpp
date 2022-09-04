@@ -12,7 +12,9 @@
 namespace sycl {
 __SYCL_INLINE_VER_NAMESPACE(_V1) {
 
-template <typename ElementType, access::address_space Space> class multi_ptr;
+template <typename ElementType, access::address_space Space,
+          access::decorated DecorateAddress>
+class multi_ptr;
 // Template specialization aliases for different pointer address spaces
 
 template <typename ElementType>

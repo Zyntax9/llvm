@@ -255,7 +255,7 @@ private:
 
   template <class _T, access::address_space Space, class BinaryOp>
   static constexpr bool BasicCheck =
-      std::is_same<typename remove_AS<_T>::type, Ty>::value &&
+      std::is_same<remove_decoration_t<_T>, Ty>::value &&
       (Space == access::address_space::global_space ||
        Space == access::address_space::local_space);
 
@@ -297,7 +297,7 @@ public:
   /// Atomic BITWISE AND operation: *ReduVarPtr &= MValue;
   template <access::address_space Space = access::address_space::global_space,
             typename _T = Ty, class _BinaryOperation = BinaryOp>
-  enable_if_t<std::is_same<typename remove_AS<_T>::type, _T>::value &&
+  enable_if_t<std::is_same<remove_decoration_t<_T>, _T>::value &&
               IsReduOptForFastAtomicFetch<_T, _BinaryOperation>::value &&
               IsBitAND<_T, _BinaryOperation>::value &&
               (Space == access::address_space::global_space ||

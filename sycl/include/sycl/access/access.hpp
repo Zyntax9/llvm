@@ -199,9 +199,6 @@ template <typename ElementType>
 struct DecoratedType<ElementType, access::address_space::local_space> {
   using type = __OPENCL_LOCAL_AS__ ElementType;
 };
-template <class T> struct remove_AS {
-  typedef T type;
-};
 
 #ifdef __SYCL_DEVICE_ONLY__
 template <class T> struct deduce_AS {
@@ -212,19 +209,7 @@ template <class T> struct deduce_AS {
       access::address_space::generic_space;
 };
 
-template <class T> struct remove_AS<__OPENCL_GLOBAL_AS__ T> {
-  typedef T type;
-};
-
 #ifdef __ENABLE_USM_ADDR_SPACE__
-template <class T> struct remove_AS<__OPENCL_GLOBAL_DEVICE_AS__ T> {
-  typedef T type;
-};
-
-template <class T> struct remove_AS<__OPENCL_GLOBAL_HOST_AS__ T> {
-  typedef T type;
-};
-
 template <class T> struct deduce_AS<__OPENCL_GLOBAL_DEVICE_AS__ T> {
   static const access::address_space value =
       access::address_space::ext_intel_global_device_space;
@@ -235,18 +220,6 @@ template <class T> struct deduce_AS<__OPENCL_GLOBAL_HOST_AS__ T> {
       access::address_space::ext_intel_global_host_space;
 };
 #endif // __ENABLE_USM_ADDR_SPACE__
-
-template <class T> struct remove_AS<__OPENCL_PRIVATE_AS__ T> {
-  typedef T type;
-};
-
-template <class T> struct remove_AS<__OPENCL_LOCAL_AS__ T> {
-  typedef T type;
-};
-
-template <class T> struct remove_AS<__OPENCL_CONSTANT_AS__ T> {
-  typedef T type;
-};
 
 template <class T> struct deduce_AS<__OPENCL_GLOBAL_AS__ T> {
   static const access::address_space value =
@@ -267,6 +240,42 @@ template <class T> struct deduce_AS<__OPENCL_CONSTANT_AS__ T> {
       access::address_space::constant_space;
 };
 #endif
+} // namespace detail
+
+template <typename T> struct remove_decoration {
+  typedef T type;
+};
+
+#ifdef __SYCL_DEVICE_ONLY__
+template <class T> struct remove_decoration<__OPENCL_GLOBAL_AS__ T> {
+  typedef T type;
+};
+
+#ifdef __ENABLE_USM_ADDR_SPACE__
+template <class T> struct remove_decoration<__OPENCL_GLOBAL_DEVICE_AS__ T> {
+  typedef T type;
+};
+
+template <class T> struct remove_decoration<__OPENCL_GLOBAL_HOST_AS__ T> {
+  typedef T type;
+};
+
+#endif // __ENABLE_USM_ADDR_SPACE__
+
+template <class T> struct remove_decoration<__OPENCL_PRIVATE_AS__ T> {
+  typedef T type;
+};
+
+template <class T> struct remove_decoration<__OPENCL_LOCAL_AS__ T> {
+  typedef T type;
+};
+
+template <class T> struct remove_decoration<__OPENCL_CONSTANT_AS__ T> {
+  typedef T type;
+};
+#endif // __SYCL_DEVICE_ONLY__
+
+template <typename T> using remove_decoration_t = remove_decoration<T>::type;
 
 #undef __OPENCL_GLOBAL_AS__
 #undef __OPENCL_GLOBAL_DEVICE_AS__
@@ -274,7 +283,6 @@ template <class T> struct deduce_AS<__OPENCL_CONSTANT_AS__ T> {
 #undef __OPENCL_LOCAL_AS__
 #undef __OPENCL_CONSTANT_AS__
 #undef __OPENCL_PRIVATE_AS__
-} // namespace detail
 
 } // __SYCL_INLINE_VER_NAMESPACE(_V1)
 } // namespace sycl
